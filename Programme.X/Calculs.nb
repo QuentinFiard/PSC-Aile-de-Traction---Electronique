@@ -1,0 +1,279 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      8999,        270]
+NotebookOptionsPosition[      7636,        221]
+NotebookOutlinePosition[      7990,        237]
+CellTagsIndexPosition[      7947,        234]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[TextData[StyleBox["Calcul des prescalers \[AGrave] choisir pour le contr\
+\[OHat]le des moteurs", "Subsection"]], "Text",
+ CellChangeTimes->{{3.539331746105349*^9, 3.539331793320703*^9}, {
+  3.539332596124217*^9, 3.539332598257592*^9}}],
+
+Cell[BoxData[
+ RowBox[{"\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"maxSignalLength", " ", "=", " ", 
+     RowBox[{"4", "*", 
+      RowBox[{"10", "^", 
+       RowBox[{"(", 
+        RowBox[{"-", "3"}], ")"}]}]}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"picFrequency", " ", "=", " ", 
+     RowBox[{"12", "*", 
+      RowBox[{"10", "^", "6"}]}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"timerMaxValue", " ", "=", " ", 
+     RowBox[{
+      RowBox[{"2", "^", "16"}], "-", "1"}]}], ";"}]}]}]], "Input",
+ CellChangeTimes->{{3.539331797103794*^9, 3.539331871187879*^9}, {
+  3.539331916759466*^9, 3.5393319373314667`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"For", "[", 
+   RowBox[{
+    RowBox[{"i", "=", "1"}], " ", ",", " ", 
+    RowBox[{"i", "\[LessEqual]", "256"}], " ", ",", " ", 
+    RowBox[{"i", " ", "*=", " ", "2"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{
+     "str", " ", "=", " ", "\"\<Max signal length for prescaler of \>\""}], 
+     ";", "\[IndentingNewLine]", 
+     RowBox[{"str", " ", "=", " ", 
+      RowBox[{"str", " ", "<>", " ", 
+       RowBox[{"ToString", "[", "i", "]"}]}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"str", " ", "=", " ", 
+      RowBox[{"str", " ", "<>", " ", "\"\< : \>\"", " ", "<>", " ", 
+       RowBox[{"ToString", "[", 
+        RowBox[{"N", "[", 
+         RowBox[{"1000", "*", "i", "*", 
+          RowBox[{"timerMaxValue", " ", "/", " ", "picFrequency"}]}], "]"}], 
+        "]"}], " ", "<>", " ", "\"\< ms\>\""}]}], ";", "\[IndentingNewLine]", 
+     
+     RowBox[{"Print", "[", "str", "]"}], ";"}]}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.539331889301304*^9, 3.539331959970327*^9}, {
+  3.53933206182832*^9, 3.539332158330563*^9}, {3.539332195032432*^9, 
+  3.539332197412354*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"Max signal length for prescaler of 1 : 5.46125 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197924165*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 2 : 10.9225 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197926405*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 4 : 21.845 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.5393321979289923`*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 8 : 43.69 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197930481*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 16 : 87.38 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.5393321979319677`*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 32 : 174.76 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197933448*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 64 : 349.52 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197935218*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 128 : 699.04 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.53933219793717*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 256 : 1398.08 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332158917006*^9, 3.539332197938684*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"N", "[", 
+  RowBox[{"1000", "*", 
+   RowBox[{"timerMaxValue", "/", "picFrequency"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.5393322071660147`*^9, 3.53933222422472*^9}}],
+
+Cell[BoxData["5.46125`"], "Output",
+ CellChangeTimes->{{3.53933221637957*^9, 3.539332225047842*^9}}]
+}, Open  ]],
+
+Cell[BoxData[
+ StyleBox[
+  RowBox[{
+   RowBox[{
+   "Un", " ", "prescaler", " ", "de", " ", "1", " ", "est", " ", "donc", " ", 
+    "ok", " ", "pour", " ", "le", " ", "timer", " ", "0.", " ", "Regardons", 
+    " ", "le", " ", "pre"}], "-", " ", 
+   RowBox[{"et", " ", "postscaler", " ", "du", " ", "timer", " ", "2"}]}], 
+  "Subsection"]], "Input",
+ CellChangeTimes->{{3.539332604644187*^9, 3.5393326230909567`*^9}, {
+  3.539332737955295*^9, 3.5393327448211117`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"requiredDuration", " ", "=", " ", 
+    RowBox[{"20", "*", 
+     RowBox[{"10", "^", 
+      RowBox[{"(", 
+       RowBox[{"-", "3"}], ")"}]}]}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"20", "ms", " ", "entre", " ", "deux", " ", "signaux"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"timer2MaxValue", " ", "=", " ", "256"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.539332633786272*^9, 3.539332667380685*^9}, {
+  3.5393327021667643`*^9, 3.539332716195765*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"For", "[", 
+   RowBox[{
+    RowBox[{"i", "=", "1"}], " ", ",", " ", 
+    RowBox[{"i", "\[LessEqual]", "256"}], " ", ",", " ", 
+    RowBox[{"i", " ", "*=", " ", "2"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{
+     "str", " ", "=", " ", "\"\<Max signal length for prescaler of \>\""}], 
+     ";", "\[IndentingNewLine]", 
+     RowBox[{"str", " ", "=", " ", 
+      RowBox[{"str", " ", "<>", " ", 
+       RowBox[{"ToString", "[", "i", "]"}]}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"str", " ", "=", " ", 
+      RowBox[{"str", " ", "<>", " ", "\"\< : \>\"", " ", "<>", " ", 
+       RowBox[{"ToString", "[", 
+        RowBox[{"N", "[", 
+         RowBox[{"1000", "*", "i", "*", 
+          RowBox[{"timer2MaxValue", " ", "/", " ", "picFrequency"}]}], "]"}], 
+        "]"}], " ", "<>", " ", "\"\< ms\>\""}]}], ";", "\[IndentingNewLine]", 
+     
+     RowBox[{"Print", "[", "str", "]"}], ";"}]}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{3.539332718626116*^9}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"Max signal length for prescaler of 1 : 0.0213333 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721187634*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 2 : 0.0426667 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.5393327211889877`*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 4 : 0.0853333 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721192298*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 8 : 0.170667 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721193851*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 16 : 0.341333 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721195341*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 32 : 0.682667 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721196836*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 64 : 1.36533 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721199044*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 128 : 2.73067 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.53933272120113*^9}],
+
+Cell[BoxData["\<\"Max signal length for prescaler of 256 : 5.46133 ms\"\>"], \
+"Print",
+ CellChangeTimes->{3.539332721203059*^9}]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{740, 703},
+WindowMargins->{{4, Automatic}, {Automatic, 4}},
+FrontEndVersion->"8.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (November 6, \
+2010)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[557, 20, 241, 3, 28, "Text"],
+Cell[801, 25, 662, 18, 73, "Input"],
+Cell[CellGroupData[{
+Cell[1488, 47, 1125, 25, 88, "Input"],
+Cell[CellGroupData[{
+Cell[2638, 76, 149, 2, 20, "Print"],
+Cell[2790, 80, 149, 2, 20, "Print"],
+Cell[2942, 84, 150, 2, 20, "Print"],
+Cell[3095, 88, 147, 2, 20, "Print"],
+Cell[3245, 92, 150, 2, 20, "Print"],
+Cell[3398, 96, 149, 2, 20, "Print"],
+Cell[3550, 100, 149, 2, 20, "Print"],
+Cell[3702, 104, 149, 2, 20, "Print"],
+Cell[3854, 108, 151, 2, 20, "Print"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4054, 116, 194, 4, 27, "Input"],
+Cell[4251, 122, 100, 1, 27, "Output"]
+}, Open  ]],
+Cell[4366, 126, 466, 10, 29, "Input"],
+Cell[4835, 138, 534, 14, 43, "Input"],
+Cell[CellGroupData[{
+Cell[5394, 156, 1005, 23, 88, "Input"],
+Cell[CellGroupData[{
+Cell[6424, 183, 129, 2, 20, "Print"],
+Cell[6556, 187, 131, 2, 20, "Print"],
+Cell[6690, 191, 129, 2, 20, "Print"],
+Cell[6822, 195, 128, 2, 20, "Print"],
+Cell[6953, 199, 129, 2, 20, "Print"],
+Cell[7085, 203, 129, 2, 20, "Print"],
+Cell[7217, 207, 128, 2, 20, "Print"],
+Cell[7348, 211, 128, 2, 20, "Print"],
+Cell[7479, 215, 129, 2, 20, "Print"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

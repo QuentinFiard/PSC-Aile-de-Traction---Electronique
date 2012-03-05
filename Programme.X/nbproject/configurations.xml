@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="62">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="Capteurs" displayName="Capteurs" projectFiles="true">
+      <itemPath>Capteurs/Capteurs.h</itemPath>
+      <itemPath>Capteurs/Capteurs.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="Common" displayName="Common" projectFiles="true">
+      <itemPath>Common/Compiler.h</itemPath>
+      <itemPath>Common/GenericTypeDefs.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ControleMoteur"
+                   displayName="ControleMoteur"
+                   projectFiles="true">
+      <itemPath>ControleMoteur/ControleMoteur.h</itemPath>
+      <itemPath>ControleMoteur/ControleMoteur.c</itemPath>
+    </logicalFolder>
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="Interrupts" displayName="Interrupts" projectFiles="true">
+      <itemPath>Interrupts/Interrupts.c</itemPath>
+      <itemPath>Interrupts/Interrupts.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="LibraryFiles"
+                   displayName="Library Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="LinkerScript"
+                   displayName="Linker Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="ObjectFiles"
+                   displayName="Object Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="USB" displayName="USB" projectFiles="true">
+      <logicalFolder name="f1" displayName="USB Stack" projectFiles="true">
+        <itemPath>USB/usb.h</itemPath>
+        <itemPath>USB/usb_ch9.h</itemPath>
+        <itemPath>USB/usb_common.h</itemPath>
+        <itemPath>USB/usb_config.h</itemPath>
+        <itemPath>USB/usb_descriptors.c</itemPath>
+        <itemPath>USB/usb_device.c</itemPath>
+        <itemPath>USB/usb_device.h</itemPath>
+        <itemPath>USB/usb_device_local.h</itemPath>
+        <itemPath>USB/usb_function_cdc.c</itemPath>
+        <itemPath>USB/usb_function_cdc.h</itemPath>
+        <itemPath>USB/usb_hal.h</itemPath>
+        <itemPath>USB/usb_hal_pic18.h</itemPath>
+        <itemPath>USB/HardwareProfile.h</itemPath>
+      </logicalFolder>
+      <itemPath>USB/CommunicationUSB.c</itemPath>
+      <itemPath>USB/CommunicationUSB.h</itemPath>
+      <itemPath>USB/CommunicationProtocol.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+    <itemPath>main.c</itemPath>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="default" type="2">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <targetDevice>PIC18F2550</targetDevice>
+        <targetHeader></targetHeader>
+        <platformTool>PICkit3PlatformTool</platformTool>
+        <languageToolchain>C18</languageToolchain>
+        <languageToolchainVersion>3.40</languageToolchainVersion>
+        <platform>4</platform>
+      </toolsSet>
+      <compileType>
+        <linkerTool>
+          <linkerLibItems>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <makeCustomizationType>
+        <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
+        <makeCustomizationPreStep></makeCustomizationPreStep>
+        <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
+        <makeCustomizationPostStep></makeCustomizationPostStep>
+        <makeCustomizationAlternativeFileToLoadEnabled>false</makeCustomizationAlternativeFileToLoadEnabled>
+        <makeCustomizationAlternativeFileToLoad></makeCustomizationAlternativeFileToLoad>
+        <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
+      </makeCustomizationType>
+      <C18>
+        <property key="storage-class" value="sca"/>
+        <property key="enable-opa" value="true"/>
+        <property key="enable-all-optimizations" value="true"/>
+        <property key="preprocessor-macros" value=""/>
+        <property key="default-char-unsigned" value="false"/>
+        <property key="optimization-master" value="Enable all"/>
+        <property key="code-model" value="mS"/>
+        <property key="warning-level" value="3"/>
+        <property key="extra-include-directories"
+                  value="/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB;/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"/>
+        <property key="enable-ow" value="true"/>
+        <property key="verbose" value="true"/>
+        <property key="enable-ou" value="true"/>
+        <property key="enable-ot" value="true"/>
+        <property key="enable-os" value="true"/>
+        <property key="data-model" value="Oa-"/>
+        <property key="enable-or" value="true"/>
+        <property key="enable-op" value="true"/>
+        <property key="enable-on" value="true"/>
+        <property key="enable-om" value="true"/>
+        <property key="procedural-abstraction-passes" value="0"/>
+        <property key="enable-multi-bank-stack-model" value="false"/>
+        <property key="enable-int-promotion" value="false"/>
+        <property key="enable-od" value="true"/>
+        <property key="enable-ob" value="true"/>
+      </C18>
+      <C18-AS>
+        <property key="default.radix" value="HEX"/>
+        <property key="enable.case.sensitivity" value="true"/>
+        <property key="hex.output.format" value="INHX32"/>
+        <property key="preprocessor.macros" value=""/>
+        <property key="warning.level" value="0"/>
+        <property key="cross.reference.file" value=""/>
+      </C18-AS>
+      <C18-LD>
+        <property key="hex-output-format" value="INHX32"/>
+        <property key="cod-file" value="false"/>
+        <property key="map-file" value=""/>
+        <property key="extra-lib-directories" value=""/>
+      </C18-LD>
+      <C18LanguageToolchain>
+        <property key="stack-analysis-mplink" value="false"/>
+        <property key="extended-mode-mcc18" value="false"/>
+        <property key="stack-analysis" value="false"/>
+        <property key="stack-analysis-mcc18" value="false"/>
+        <property key="extended-mode" value="false"/>
+        <property key="extended-mode-mpasm" value="false"/>
+        <property key="extended-mode-mplink" value="false"/>
+      </C18LanguageToolchain>
+      <PICkit3PlatformTool>
+        <property key="programoptions.preserveprogramrange.end" value="0x3f"/>
+        <property key="memories.id" value="false"/>
+        <property key="Freeze Peripherals" value="true"/>
+        <property key="programoptions.preserveeeprom" value="false"/>
+        <property key="programmertogo.imagename" value=""/>
+        <property key="memories.programmemory" value="true"/>
+        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
+        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="hwtoolclock.frcindebug" value="false"/>
+        <property key="programoptions.usehighvoltageonmclr" value="false"/>
+        <property key="memories.eeprom" value="false"/>
+        <property key="ToolFirmwareFilePath"
+                  value="Press to browse for a specific firmware version"/>
+        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
+        <property key="programoptions.preserveprogramrange.start" value="0x0"/>
+        <property key="voltagevalue" value="5.0"/>
+        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="memories.programmemory.start" value="0x0"/>
+        <property key="memories.programmemory.end" value="0x7fff"/>
+        <property key="poweroptions.powerenable" value="false"/>
+      </PICkit3PlatformTool>
+    </conf>
+  </confs>
+</configurationDescriptor>
