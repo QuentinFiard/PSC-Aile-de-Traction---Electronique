@@ -39,11 +39,11 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/Capteurs/Capteurs.o ${OBJECTDIR}/ControleMoteur/ControleMoteur.o ${OBJECTDIR}/Interrupts/Interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/USB/CommunicationUSB.o ${OBJECTDIR}/USB/usb_descriptors.o ${OBJECTDIR}/USB/usb_device.o ${OBJECTDIR}/USB/usb_function_cdc.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/Capteurs/Capteurs.o.d ${OBJECTDIR}/ControleMoteur/ControleMoteur.o.d ${OBJECTDIR}/Interrupts/Interrupts.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/USB/CommunicationUSB.o.d ${OBJECTDIR}/USB/usb_descriptors.o.d ${OBJECTDIR}/USB/usb_device.o.d ${OBJECTDIR}/USB/usb_function_cdc.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/Capteurs/Capteurs.o ${OBJECTDIR}/ControleMoteur/ControleMoteur.o ${OBJECTDIR}/Interrupts/Interrupts.o ${OBJECTDIR}/USB/usb_descriptors.o ${OBJECTDIR}/USB/usb_device.o ${OBJECTDIR}/USB/usb_function_cdc.o ${OBJECTDIR}/USB/CommunicationUSB.o ${OBJECTDIR}/main.o ${OBJECTDIR}/Utilities.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/Capteurs/Capteurs.o.d ${OBJECTDIR}/ControleMoteur/ControleMoteur.o.d ${OBJECTDIR}/Interrupts/Interrupts.o.d ${OBJECTDIR}/USB/usb_descriptors.o.d ${OBJECTDIR}/USB/usb_device.o.d ${OBJECTDIR}/USB/usb_function_cdc.o.d ${OBJECTDIR}/USB/CommunicationUSB.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/Utilities.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/Capteurs/Capteurs.o ${OBJECTDIR}/ControleMoteur/ControleMoteur.o ${OBJECTDIR}/Interrupts/Interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/USB/CommunicationUSB.o ${OBJECTDIR}/USB/usb_descriptors.o ${OBJECTDIR}/USB/usb_device.o ${OBJECTDIR}/USB/usb_function_cdc.o
+OBJECTFILES=${OBJECTDIR}/Capteurs/Capteurs.o ${OBJECTDIR}/ControleMoteur/ControleMoteur.o ${OBJECTDIR}/Interrupts/Interrupts.o ${OBJECTDIR}/USB/usb_descriptors.o ${OBJECTDIR}/USB/usb_device.o ${OBJECTDIR}/USB/usb_function_cdc.o ${OBJECTDIR}/USB/CommunicationUSB.o ${OBJECTDIR}/main.o ${OBJECTDIR}/Utilities.o
 
 
 CFLAGS=
@@ -107,18 +107,6 @@ ${OBJECTDIR}/Interrupts/Interrupts.o: Interrupts/Interrupts.c  nbproject/Makefil
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/Interrupts/Interrupts.o   Interrupts/Interrupts.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/Interrupts/Interrupts.o 
 	
-${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
-	@${RM} ${OBJECTDIR}/main.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/main.o   main.c 
-	@${DEP_GEN} -d ${OBJECTDIR}/main.o 
-	
-${OBJECTDIR}/USB/CommunicationUSB.o: USB/CommunicationUSB.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR}/USB 
-	@${RM} ${OBJECTDIR}/USB/CommunicationUSB.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/CommunicationUSB.o   USB/CommunicationUSB.c 
-	@${DEP_GEN} -d ${OBJECTDIR}/USB/CommunicationUSB.o 
-	
 ${OBJECTDIR}/USB/usb_descriptors.o: USB/usb_descriptors.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/USB 
 	@${RM} ${OBJECTDIR}/USB/usb_descriptors.o.d 
@@ -136,6 +124,24 @@ ${OBJECTDIR}/USB/usb_function_cdc.o: USB/usb_function_cdc.c  nbproject/Makefile-
 	@${RM} ${OBJECTDIR}/USB/usb_function_cdc.o.d 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/usb_function_cdc.o   USB/usb_function_cdc.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/USB/usb_function_cdc.o 
+	
+${OBJECTDIR}/USB/CommunicationUSB.o: USB/CommunicationUSB.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/USB 
+	@${RM} ${OBJECTDIR}/USB/CommunicationUSB.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/CommunicationUSB.o   USB/CommunicationUSB.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/USB/CommunicationUSB.o 
+	
+${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/main.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/main.o   main.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/main.o 
+	
+${OBJECTDIR}/Utilities.o: Utilities.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/Utilities.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/Utilities.o   Utilities.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/Utilities.o 
 	
 else
 ${OBJECTDIR}/Capteurs/Capteurs.o: Capteurs/Capteurs.c  nbproject/Makefile-${CND_CONF}.mk
@@ -156,18 +162,6 @@ ${OBJECTDIR}/Interrupts/Interrupts.o: Interrupts/Interrupts.c  nbproject/Makefil
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/Interrupts/Interrupts.o   Interrupts/Interrupts.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/Interrupts/Interrupts.o 
 	
-${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
-	@${RM} ${OBJECTDIR}/main.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/main.o   main.c 
-	@${DEP_GEN} -d ${OBJECTDIR}/main.o 
-	
-${OBJECTDIR}/USB/CommunicationUSB.o: USB/CommunicationUSB.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR}/USB 
-	@${RM} ${OBJECTDIR}/USB/CommunicationUSB.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/CommunicationUSB.o   USB/CommunicationUSB.c 
-	@${DEP_GEN} -d ${OBJECTDIR}/USB/CommunicationUSB.o 
-	
 ${OBJECTDIR}/USB/usb_descriptors.o: USB/usb_descriptors.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/USB 
 	@${RM} ${OBJECTDIR}/USB/usb_descriptors.o.d 
@@ -185,6 +179,24 @@ ${OBJECTDIR}/USB/usb_function_cdc.o: USB/usb_function_cdc.c  nbproject/Makefile-
 	@${RM} ${OBJECTDIR}/USB/usb_function_cdc.o.d 
 	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/usb_function_cdc.o   USB/usb_function_cdc.c 
 	@${DEP_GEN} -d ${OBJECTDIR}/USB/usb_function_cdc.o 
+	
+${OBJECTDIR}/USB/CommunicationUSB.o: USB/CommunicationUSB.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/USB 
+	@${RM} ${OBJECTDIR}/USB/CommunicationUSB.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/USB/CommunicationUSB.o   USB/CommunicationUSB.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/USB/CommunicationUSB.o 
+	
+${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/main.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/main.o   main.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/main.o 
+	
+${OBJECTDIR}/Utilities.o: Utilities.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/Utilities.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE) -p$(MP_PROCESSOR_OPTION) --verbose -w3 -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Common" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/ControleMoteur" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/AcquisitionCapteurs" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Interrupts" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/USB" -I"/Users/quentinfiard/Documents/PSC/GitHub/Electronique/Programme.X/Capteurs"  -I ${MP_CC_DIR}/../h  -fo ${OBJECTDIR}/Utilities.o   Utilities.c 
+	@${DEP_GEN} -d ${OBJECTDIR}/Utilities.o 
 	
 endif
 

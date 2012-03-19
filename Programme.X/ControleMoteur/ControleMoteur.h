@@ -8,6 +8,7 @@
 
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
+#include "CommunicationProtocol.h"
 
 typedef UINT8 Moteur;
 
@@ -32,3 +33,19 @@ void openMotor(Moteur moteur);
 double positionObjectiveForMotor(Moteur moteur);
 
 void setPositionObjectiveForMotor(Moteur moteur,double objective);
+
+void setMaxSignalDuration(float duration);
+
+void setMinSignalDuration(float duration);
+
+float readMaxSignalDuration(void);
+
+float readMinSignalDuration(void);
+
+PID_Coeffs* readSpeedPIDCoeffs(void);
+
+PID_Coeffs* readPositionPIDCoeffs(void);
+
+void setSpeedPIDCoeffs(PID_Coeffs* coeffs);
+
+void setPositionPIDCoeffs(PID_Coeffs* coeffs);

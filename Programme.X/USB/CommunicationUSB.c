@@ -57,6 +57,14 @@ static void handleMotorControlRequest(void);
 
 void loadNewData()
 {
+    if(dataAvailable==0)
+    {
+        dataAvailable = getsUSBUSART(USB_In_Buffer,64);
+        nextEmptyByte = dataAvailable;
+        currentByte = 0;
+
+        return;
+    }
     if(dataAvailable<64)
     {
         UINT8 oldDataAvailable = dataAvailable;
@@ -144,7 +152,7 @@ static void continueWithCurrentMode(void)
     }
 }
 
-static void handleMotorControlActionForMotor()
+static void handleMotorControlAction()
 {
     if(action == MC_SET_POSITION)
     {
@@ -154,9 +162,9 @@ static void handleMotorControlActionForMotor()
     	}
     	if(dataAvailable>=4)
     	{
-            double position;
+            float position;
 
-            position = *((double*)(USB_In_Buffer+currentByte));
+            position = *((float*)(USB_In_Buffer+currentByte));
 
             setPositionObjectiveForMotor(motorID,position);
 
@@ -165,6 +173,158 @@ static void handleMotorControlActionForMotor()
             currentByte = (currentByte+4)%64;
             dataAvailable -= 4;
         }
+    }
+    else if(action == MC_SET_SPEED)
+    {
+
+    }
+    else if(action == MC_SET_MIN_SIGNAL_DURATION)
+    {
+        if(dataAvailable<4)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=4)
+    	{
+            float newDuration;
+
+            newDuration = *((float*)(USB_In_Buffer+currentByte));
+
+            setMinSignalDuration(newDuration);
+
+            currentMode = PR_NOREQUEST;
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+        }
+    }
+    else if(action == MC_SET_MAX_SIGNAL_DURATION)
+    {
+        if(dataAvailable<4)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=4)
+    	{
+            float newDuration;
+
+            newDuration = *((float*)(USB_In_Buffer+currentByte));
+
+            setMaxSignalDuration(newDuration);
+
+            currentMode = PR_NOREQUEST;
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+        }
+    }
+    else if(action == MC_READ_MIN_SIGNAL_DURATION)
+    {
+        float duration = readMinSignalDuration();
+
+        *((float*)USB_Out_Buffer) = duration;
+
+        putUSBUSART(USB_Out_Buffer,4);
+
+        currentMode = PR_NOREQUEST;
+    }
+    else if(action == MC_READ_MAX_SIGNAL_DURATION)
+    {
+        float duration = readMaxSignalDuration();
+
+        *((float*)USB_Out_Buffer) = duration;
+
+        putUSBUSART(USB_Out_Buffer,4);
+
+        currentMode = PR_NOREQUEST;
+    }
+    else if(action == MC_SET_PID_SPEED_COEFFS)
+    {
+        if(dataAvailable<12)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=12)
+    	{
+            PID_Coeffs newCoeffs;
+
+            newCoeffs.gainProportionnel = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            newCoeffs.gainDifferentiel = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            newCoeffs.gainIntegral = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            setSpeedPIDCoeffs(&newCoeffs);
+
+            currentMode = PR_NOREQUEST;
+        }
+    }
+    else if(action == MC_SET_PID_POSITION_COEFFS)
+    {
+        if(dataAvailable<12)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=12)
+    	{
+            PID_Coeffs newCoeffs;
+
+            newCoeffs.gainProportionnel = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            newCoeffs.gainDifferentiel = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            newCoeffs.gainIntegral = *((float*)(USB_In_Buffer+currentByte));
+
+            currentByte = (currentByte+4)%64;
+            dataAvailable -= 4;
+
+            setPositionPIDCoeffs(&newCoeffs);
+
+            currentMode = PR_NOREQUEST;
+        }
+    }
+    else if(action == MC_READ_PID_SPEED_COEFFS)
+    {
+        PID_Coeffs* coeffs = readSpeedPIDCoeffs();
+
+        float* ptr = (float*)USB_Out_Buffer;
+
+        *ptr = coeffs->gainProportionnel;
+        *(ptr+1) = coeffs->gainDifferentiel;
+        *(ptr+2) = coeffs->gainIntegral;
+
+        putUSBUSART(USB_Out_Buffer,12);
+
+        currentMode = PR_NOREQUEST;
+    }
+    else if(action == MC_READ_PID_POSITION_COEFFS)
+    {
+        PID_Coeffs* coeffs = readPositionPIDCoeffs();
+
+        float* ptr = (float*)USB_Out_Buffer;
+
+        *ptr = coeffs->gainProportionnel;
+        *(ptr+1) = coeffs->gainDifferentiel;
+        *(ptr+2) = coeffs->gainIntegral;
+
+        putUSBUSART(USB_Out_Buffer,12);
+
+        currentMode = PR_NOREQUEST;
     }
 }
 
@@ -179,8 +339,16 @@ static void handleMotorControlRequest(void)
     	if(dataAvailable>=1)
     	{
             waitingForActionChoice = FALSE;
-            waitingForMotorID = TRUE;
             action = USB_In_Buffer[currentByte];
+
+            if(action == MC_SET_POSITION || action == MC_SET_SPEED)
+            {
+                waitingForMotorID = TRUE;
+            }
+            else
+            {
+                waitingForMotorID = FALSE;
+            }
             
             currentByte = (currentByte+1)%64;
             dataAvailable--;
@@ -203,7 +371,7 @@ static void handleMotorControlRequest(void)
     }
     if(!waitingForActionChoice && !waitingForMotorID)
     {
-        handleMotorControlActionForMotor();
+        handleMotorControlAction();
     }
 }
 

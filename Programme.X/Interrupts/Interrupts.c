@@ -30,14 +30,10 @@ void YourHighPriorityISRCode()
 
         MOTOR_CONTROL_PERIOD_TIMER_FLAG = 0;
     }
-    else
-    {
-        USBDeviceTasks();
-    }
 }	//This return will be a "retfie fast", since this is in a #pragma interrupt section
+
 #pragma interruptlow YourLowPriorityISRCode
 void YourLowPriorityISRCode()
 {
-    
-
+    USBDeviceTasks();
 }	//This return will be a "retfie", since this is in a #pragma interruptlow section

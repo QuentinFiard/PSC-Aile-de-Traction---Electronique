@@ -65,6 +65,8 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
     <itemPath>main.c</itemPath>
+    <itemPath>Utilities.h</itemPath>
+    <itemPath>Utilities.c</itemPath>
   </logicalFolder>
   <sourceRootList>
     <Elem>.</Elem>

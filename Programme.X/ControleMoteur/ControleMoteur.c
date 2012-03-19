@@ -8,6 +8,7 @@
 
 #include "ControleMoteur.h"
 #include <timers.h>
+#include "Utilities.h"
 
 #define MOTEUR_SELECT0  LATBbits.LATB4
 #define MOTEUR_SELECT1  LATBbits.LATB2
@@ -19,20 +20,29 @@
 
 #define OUTPUT 0
 
-#define MIN_SIGNAL_DURATION 0.200 //Value in ms
-#define MAX_SIGNAL_DURATION 2.000 //Value in ms
+#define MIN_SIGNAL_DURATION 1.250 //Value in ms
+#define MAX_SIGNAL_DURATION 1.850 //Value in ms
 
 #define TICKS_PER_MILLISECONDS 12000
 
 #define SIGNAL_TIMER_INTERRUPT_ENABLE INTCONbits.TMR0IE
 #define CONTROL_PERIOD_INTERRUPT_ENABLE PIE2bits.TMR3IE
 
-//#define WAITOFFSET 5536
-#define WAITOFFSET 10000
+#define WAITOFFSET 5536
+//#define WAITOFFSET 10000
 
 //---------------------------------------------------------------------
  // Variables
  //---------------------------------------------------------------------
+#pragma romdata
+
+rom float minSignalDurationSaved = 0;
+rom float maxSignalDurationSaved = 0;
+
+rom PID_Coeffs PID_speed_saved;
+rom PID_Coeffs PID_position_saved;
+
+
  #pragma idata access accessram
 
 static near volatile BOOL isControllingMotor[4] = {FALSE,FALSE,FALSE,FALSE};
@@ -45,6 +55,16 @@ static near volatile double positionForMotor2 = 0;
 static near volatile double positionForMotor3 = 0;
 
 static near volatile Moteur currentMotor = 0;
+
+static near volatile float minSignalDuration = 0;
+static near volatile float maxSignalDuration = 0;
+
+#pragma udata
+
+static volatile PID_Coeffs PID_speed;
+static volatile PID_Coeffs PID_position;
+
+#pragma code
 
 static void resetTimer20ms()
 {
@@ -121,6 +141,12 @@ void prepareMotorControl()
     MOTEUR_SELECT0_DIRECTION = OUTPUT;
     MOTEUR_SELECT1_DIRECTION = OUTPUT;
     MOTEUR_SIGNAL_DIRECTION = OUTPUT;
+
+    eeprom_read_block((UINT8)&maxSignalDurationSaved, &maxSignalDuration, sizeof(float));
+    eeprom_read_block((UINT8)&minSignalDurationSaved, &minSignalDuration, sizeof(float));
+
+    eeprom_read_block((UINT8)&PID_speed_saved, &PID_speed, sizeof(PID_Coeffs));
+    eeprom_read_block((UINT8)&PID_position_saved, &PID_position, sizeof(PID_Coeffs));
 }
 
 static void prepareControlForCurrentMotor()
@@ -179,36 +205,39 @@ void setRelativePositionObjectiveForMotor(double ratio, Moteur moteur)
 
 void startNextMotorControlSequence()
 {
-    // Timer0 is used to send the impulsions to control the motor
-    OpenTimer0(     TIMER_INT_ON
-                &   T0_16BIT
-                &   T0_SOURCE_INT
-                &   T0_PS_1_1); // No prescaler allows for a 5ms signal duration, well enough.
-
-    OpenTimer3(     TIMER_INT_ON
-                &   T3_16BIT_RW
-                &   T3_SOURCE_INT
-                &   T3_PS_1_4   // Prescaler of 4 allows for a 20ms period to be measured.
-                &   T3_SYNC_EXT_OFF
-                );
-
-    resetTimer20ms();
-
-    currentMotor = 0;
-
-    while(currentMotor<4 && !isControllingMotor[currentMotor])
+    if(maxSignalDuration!=0 && minSignalDuration != 0 && minSignalDuration < maxSignalDuration)
     {
-        currentMotor++;
-    }
+        // Timer0 is used to send the impulsions to control the motor
+        OpenTimer0(     TIMER_INT_ON
+                    &   T0_16BIT
+                    &   T0_SOURCE_INT
+                    &   T0_PS_1_1); // No prescaler allows for a 5ms signal duration, well enough.
 
-    if(currentMotor<4)
-    {
-        prepareControlForCurrentMotor();
-    }
-    else
-    {
-        CloseTimer0();
-        CloseTimer3();
+        OpenTimer3(     TIMER_INT_ON
+                    &   T3_16BIT_RW
+                    &   T3_SOURCE_INT
+                    &   T3_PS_1_4   // Prescaler of 4 allows for a 20ms period to be measured.
+                    &   T3_SYNC_EXT_OFF
+                    );
+
+        resetTimer20ms();
+
+        currentMotor = 0;
+
+        while(currentMotor<4 && !isControllingMotor[currentMotor])
+        {
+            currentMotor++;
+        }
+
+        if(currentMotor<4)
+        {
+            prepareControlForCurrentMotor();
+        }
+        else
+        {
+            CloseTimer0();
+            CloseTimer3();
+        }
     }
 }
 
@@ -235,4 +264,70 @@ void stopControllingMotor(Moteur moteur)
         CloseTimer0();
         CloseTimer3();
     }
+}
+
+void setMaxSignalDuration(float duration)
+{
+    if(duration<5000 && duration>100)
+    {
+        maxSignalDuration = duration;
+        eeprom_write_block(&maxSignalDuration, (UINT8)&maxSignalDurationSaved, sizeof(float));
+    }
+    if(maxSignalDuration<minSignalDuration)
+    {
+        Motor motor;
+        for(motor=0 ; motor<4 ; motor++)
+        {
+            isControllingMotor[motor] = FALSE;
+        }
+    }
+}
+
+void setMinSignalDuration(float duration)
+{
+    if(duration<5000 && duration>100)
+    {
+        minSignalDuration = duration;
+        eeprom_write_block(&minSignalDuration, (UINT8)&minSignalDurationSaved, sizeof(float));
+    }
+    if(maxSignalDuration<minSignalDuration)
+    {
+        Motor motor;
+        for(motor=0 ; motor<4 ; motor++)
+        {
+            isControllingMotor[motor] = FALSE;
+        }
+    }
+}
+
+float readMaxSignalDuration()
+{
+    return maxSignalDuration;
+}
+
+float readMinSignalDuration()
+{
+    return minSignalDuration;
+}
+
+PID_Coeffs* readSpeedPIDCoeffs(void)
+{
+    return &PID_speed;
+}
+
+PID_Coeffs* readPositionPIDCoeffs(void)
+{
+    return &PID_position;
+}
+
+void setSpeedPIDCoeffs(PID_Coeffs* coeffs)
+{
+    PID_speed = *coeffs;
+    eeprom_write_block(&PID_speed, (UINT8)&PID_speed_saved, sizeof(PID_Coeffs));
+}
+
+void setPositionPIDCoeffs(PID_Coeffs* coeffs)
+{
+    PID_position = *coeffs;
+    eeprom_write_block(&PID_position, (UINT8)&PID_position_saved, sizeof(PID_Coeffs));
 }

@@ -12,24 +12,7 @@
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
 
-typedef UINT8 Sensor;
-
-typedef enum
-{
-	SENSOR_ERROR_PARITY = 0x01,
-	SENSOR_ERROR_LINEARITY = 0x02,
-	SENSOR_ERROR_OCF_NOT_FINISHED = 0x04,
-	SENSOR_ERROR_OVERFLOW = 0x08,
-        SENSOR_ERROR_MAG_INC = 0x10,
-        SENSOR_ERROR_MAG_DEC = 0x20
-} SensorError;
-
-typedef struct
-{
-    Sensor sensor;
-    SensorError error;
-    UINT16 position;
-}  SensorStatus;
+#include "CommunicationProtocol.h"
 
 SensorStatus getStatusOfSensor(Sensor sensor);
 
