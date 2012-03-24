@@ -9,12 +9,12 @@
 #include <spi.h>
 #include "./Capteurs.h"
 
-#define OCF (byte2 & 0x08 != 0)
-#define COF (byte2 & 0x04 != 0)
-#define LIN (byte2 & 0x02 != 0)
-#define MAGINC (byte2 & 0x01 != 0)
-#define MAGDEC (byte3 & 0x80 != 0)
-#define PARITY ((byte3 >> 6) & 0x01)
+#define OCF ((byte2 & 0x08) == 0)
+#define COF ((byte2 & 0x04) != 0)
+#define LIN ((byte2 & 0x02) != 0)
+#define MAGINC ((byte2 & 0x01) != 0)
+#define MAGDEC ((byte3 & 0x80) != 0)
+#define PARITY ((byte3 & 0x40) != 0)
 
 #define SENSOR_PORT0 LATAbits.LATA0
 #define SENSOR_PORT1 LATAbits.LATA1
@@ -27,7 +27,7 @@ static volatile BOOL isSensorReadReady = FALSE;
 
 void prepareForSensorRead(void)
 {
-    OpenSPI(SPI_FOSC_64, MODE_10, SMPEND);
+    OpenSPI(SPI_FOSC_64, MODE_11, SMPEND);
 
     //Initialisation des ports de sélection des capteurs
     LATA |= 0x3F; // Waiting state is high
@@ -71,13 +71,13 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
     LATA |= 0x3F; // Return to waiting state
 
-    res.position = byte1;
-    res.position *= 0x10;
+    res.position = 0;
+
+    res.position += byte1;
+    res.position <<= 4;
     res.position += (byte2 >> 4);
 
     res.sensor = sensor;
-
-    test = byte2 & 0x08;
 
     res.error = 0;
 
@@ -110,7 +110,7 @@ SensorStatus getStatusOfSensor(Sensor sensor)
     return res;
 }
 
-BOOL checkParity(SensorStatus status, BIT parity)
+BOOL checkParity(SensorStatus status, BOOL parity)
 {
     UINT8 sum = 0;
     UINT8 tmp = status.position >> 8;
@@ -149,5 +149,14 @@ BOOL checkParity(SensorStatus status, BIT parity)
         sum++;
     }
 
-    return ((sum & 0x01) == parity);
+    if(parity && ((sum & 0x01)!=0))
+    {
+        return TRUE;
+    }
+    if(!parity && ((sum & 0x01)==0))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }

@@ -49,3 +49,6 @@ PID_Coeffs* readPositionPIDCoeffs(void);
 void setSpeedPIDCoeffs(PID_Coeffs* coeffs);
 
 void setPositionPIDCoeffs(PID_Coeffs* coeffs);
+
+ChoixAsservissement readChoixAsservissement(void);
+void setChoixAsservissement(ChoixAsservissement choix);

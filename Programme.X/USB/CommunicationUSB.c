@@ -326,6 +326,30 @@ static void handleMotorControlAction()
 
         currentMode = PR_NOREQUEST;
     }
+    else if(action == MC_READ_CHOIX_ASSERVISSEMENT)
+    {
+        USB_Out_Buffer[0] = readChoixAsservissement();
+
+        putUSBUSART(USB_Out_Buffer,1);
+
+        currentMode = PR_NOREQUEST;
+    }
+    else if(action == MC_SET_CHOIX_ASSERVISSEMENT)
+    {
+        if(dataAvailable<1)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=1)
+    	{
+            setChoixAsservissement(USB_In_Buffer[currentByte]);
+
+            currentByte = (currentByte+1)%64;
+            dataAvailable -= 1;
+
+            currentMode = PR_NOREQUEST;
+        }
+    }
 }
 
 static void handleMotorControlRequest(void)

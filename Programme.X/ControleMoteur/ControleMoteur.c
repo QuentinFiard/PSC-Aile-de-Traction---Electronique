@@ -34,13 +34,15 @@
 //---------------------------------------------------------------------
  // Variables
  //---------------------------------------------------------------------
-#pragma romdata
+#pragma romdata eedata_scn=0xf00000
 
-rom float minSignalDurationSaved = 0;
-rom float maxSignalDurationSaved = 0;
+rom float minSignalDurationSaved = -1;
+rom float maxSignalDurationSaved = -1;
 
-rom PID_Coeffs PID_speed_saved;
-rom PID_Coeffs PID_position_saved;
+rom PID_Coeffs PID_speed_saved = {-1,-1,-1};
+rom PID_Coeffs PID_position_saved = {-1,-1,-1};
+
+rom ChoixAsservissement choixAsservissement_saved = 0;
 
 
  #pragma idata access accessram
@@ -58,6 +60,8 @@ static near volatile Moteur currentMotor = 0;
 
 static near volatile float minSignalDuration = 0;
 static near volatile float maxSignalDuration = 0;
+
+static ChoixAsservissement choixAsservissement = 0;
 
 #pragma udata
 
@@ -147,6 +151,8 @@ void prepareMotorControl()
 
     eeprom_read_block((UINT8)&PID_speed_saved, &PID_speed, sizeof(PID_Coeffs));
     eeprom_read_block((UINT8)&PID_position_saved, &PID_position, sizeof(PID_Coeffs));
+
+    eeprom_read_block((UINT8)&choixAsservissement_saved, &choixAsservissement, sizeof(ChoixAsservissement));
 }
 
 static void prepareControlForCurrentMotor()
@@ -268,7 +274,7 @@ void stopControllingMotor(Moteur moteur)
 
 void setMaxSignalDuration(float duration)
 {
-    if(duration<5000 && duration>100)
+    if(duration<5.000 && duration>0.100)
     {
         maxSignalDuration = duration;
         eeprom_write_block(&maxSignalDuration, (UINT8)&maxSignalDurationSaved, sizeof(float));
@@ -285,7 +291,7 @@ void setMaxSignalDuration(float duration)
 
 void setMinSignalDuration(float duration)
 {
-    if(duration<5000 && duration>100)
+    if(duration<5.000 && duration>0.100)
     {
         minSignalDuration = duration;
         eeprom_write_block(&minSignalDuration, (UINT8)&minSignalDurationSaved, sizeof(float));
@@ -330,4 +336,15 @@ void setPositionPIDCoeffs(PID_Coeffs* coeffs)
 {
     PID_position = *coeffs;
     eeprom_write_block(&PID_position, (UINT8)&PID_position_saved, sizeof(PID_Coeffs));
+}
+
+ChoixAsservissement readChoixAsservissement(void)
+{
+    return choixAsservissement;
+}
+
+void setChoixAsservissement(ChoixAsservissement newChoix)
+{
+    choixAsservissement = newChoix;
+    eeprom_write_block(&choixAsservissement, (UINT8)&choixAsservissement_saved, sizeof(ChoixAsservissement));
 }
