@@ -8,13 +8,23 @@
 
 #include <spi.h>
 #include "./Capteurs.h"
+#include <delays.h>
 
+/*
 #define OCF ((byte2 & 0x08) == 0)
 #define COF ((byte2 & 0x04) != 0)
 #define LIN ((byte2 & 0x02) != 0)
 #define MAGINC ((byte2 & 0x01) != 0)
 #define MAGDEC ((byte3 & 0x80) != 0)
 #define PARITY ((byte3 & 0x40) != 0)
+*/
+
+#define OCF ((byte3 & 0x20) == 0)
+#define COF ((byte3 & 0x10) != 0)
+#define LIN ((byte3 & 0x08) != 0)
+#define MAGINC ((byte3 & 0x04) != 0)
+#define MAGDEC ((byte3 & 0x02) != 0)
+#define PARITY ((byte3 & 0x01) != 0)
 
 #define SENSOR_PORT0 LATAbits.LATA0
 #define SENSOR_PORT1 LATAbits.LATA1
@@ -23,16 +33,26 @@
 #define SENSOR_PORT4 LATAbits.LATA4
 #define SENSOR_PORT5 LATAbits.LATA5
 
+#define CLOCK_PORT LATBbits.LATB1
+#define DATA_IN PORTBbits.RB0;
+
+#define SPI_TIME_OFFSET 5
+
 static volatile BOOL isSensorReadReady = FALSE;
 
 void prepareForSensorRead(void)
 {
-    OpenSPI(SPI_FOSC_64, MODE_11, SMPEND);
+    //OpenSPI(SPI_FOSC_64, MODE_00, SMPEND);
 
     //Initialisation des ports de sélection des capteurs
     LATA |= 0x3F; // Waiting state is high
     ADCON1 |= 0x0F;
     TRISA &= 0xC0; // Ports en sortie
+
+    TRISBbits.RB0 = 1; // RB0 en entrée
+    CLOCK_PORT = 1;
+    TRISBbits.RB1 = 0; // RB1 en sortie
+
 
     isSensorReadReady = TRUE;
 }
@@ -47,6 +67,7 @@ static void selectSensor(Sensor sensor)
 SensorStatus getStatusOfSensor(Sensor sensor)
 {
     UINT8 byte1,byte2,byte3,test;
+    UINT8 i;
     SensorStatus res;
 
     if(!isSensorReadReady)
@@ -56,26 +77,53 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
     selectSensor(sensor);
 
-    // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles)
+    // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 100)
 
-    Nop();
-    Nop();
-    Nop();
-    Nop();
-    Nop();
-    Nop();
-
-    byte1 = ReadSPI();
-    byte2 = ReadSPI();
-    byte3 = ReadSPI();
-
-    LATA |= 0x3F; // Return to waiting state
+    Delay10TCYx(100);
 
     res.position = 0;
 
+    for(i=0 ; i<12 ; i++)
+    {
+        res.position <<= 1;
+
+        CLOCK_PORT = 0;
+
+        Delay10TCYx(SPI_TIME_OFFSET);
+
+        CLOCK_PORT = 1;
+
+        Delay10TCYx(SPI_TIME_OFFSET);
+
+        res.position += DATA_IN;
+    }
+
+    for(i=0 ; i<6 ; i++)
+    {
+        byte3 <<= 1;
+
+        CLOCK_PORT = 0;
+
+        Delay10TCYx(SPI_TIME_OFFSET);
+
+        CLOCK_PORT = 1;
+
+        Delay10TCYx(SPI_TIME_OFFSET);
+
+        byte3 += DATA_IN;
+    }
+
+    /*byte1 = ReadSPI();
+    byte2 = ReadSPI();
+    byte3 = ReadSPI();*/
+
+    LATA |= 0x3F; // Return to waiting state
+
+    /*res.position = 0;
+
     res.position += byte1;
     res.position <<= 4;
-    res.position += (byte2 >> 4);
+    res.position += (byte2 >> 4);*/
 
     res.sensor = sensor;
 
@@ -106,6 +154,11 @@ SensorStatus getStatusOfSensor(Sensor sensor)
     {
         res.error += SENSOR_ERROR_PARITY;
     }
+
+    //res.position = byte1;
+    //res.position *= 0x100;
+    //res.position += byte2;
+    //res.error = byte3;
 
     return res;
 }
@@ -151,12 +204,12 @@ BOOL checkParity(SensorStatus status, BOOL parity)
 
     if(parity && ((sum & 0x01)!=0))
     {
-        return TRUE;
+        return FALSE;
     }
     if(!parity && ((sum & 0x01)==0))
     {
-        return TRUE;
+        return FALSE;
     }
 
-    return FALSE;
+    return TRUE;
 }
