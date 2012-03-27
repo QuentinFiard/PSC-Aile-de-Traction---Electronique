@@ -52,3 +52,6 @@ void setPositionPIDCoeffs(PID_Coeffs* coeffs);
 
 ChoixAsservissement readChoixAsservissement(void);
 void setChoixAsservissement(ChoixAsservissement choix);
+
+void setPIDPeriod(float period);
+float readPIDPeriod(void);

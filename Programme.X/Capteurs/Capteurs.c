@@ -8,6 +8,7 @@
 
 #include <spi.h>
 #include "./Capteurs.h"
+#include <delays.h>
 
 #define OCF ((byte2 & 0x08) == 0)
 #define COF ((byte2 & 0x04) != 0)
@@ -27,7 +28,7 @@ static volatile BOOL isSensorReadReady = FALSE;
 
 void prepareForSensorRead(void)
 {
-    OpenSPI(SPI_FOSC_64, MODE_11, SMPEND);
+    OpenSPI(SPI_FOSC_64, MODE_10, SMPEND);
 
     //Initialisation des ports de sélection des capteurs
     LATA |= 0x3F; // Waiting state is high
@@ -58,18 +59,25 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
     // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles)
 
-    Nop();
-    Nop();
-    Nop();
-    Nop();
-    Nop();
-    Nop();
+    Delay10TCYx(2);
 
     byte1 = ReadSPI();
     byte2 = ReadSPI();
     byte3 = ReadSPI();
 
+    /*byte1 <<= 1;
+    byte1 += (byte2 >> 7);
+    byte2 <<= 1;
+    byte2 += (byte3 >> 7);
+    byte3 <<= 1;*/
+
     LATA |= 0x3F; // Return to waiting state
+
+    byte1 <<= 1;
+    byte1 += (byte2>>7);
+    byte2 <<= 1;
+    byte2 += (byte3>>7);
+    byte3 <<= 1;
 
     res.position = 0;
 
@@ -102,7 +110,7 @@ SensorStatus getStatusOfSensor(Sensor sensor)
         res.error += SENSOR_ERROR_MAG_INC;
     }
 
-    if(!checkParity(res,PARITY))
+    if(!checkParity(byte1,byte2,byte3))
     {
         res.error += SENSOR_ERROR_PARITY;
     }
@@ -110,53 +118,30 @@ SensorStatus getStatusOfSensor(Sensor sensor)
     return res;
 }
 
-BOOL checkParity(SensorStatus status, BOOL parity)
+BOOL checkParity(UINT8 byte1, UINT8 byte2, UINT8 byte3)
 {
     UINT8 sum = 0;
-    UINT8 tmp = status.position >> 8;
-    UINT8 currentBit;
+    BOOL parity;
 
-    sum += tmp & 0x01;
-    sum += (tmp >> 1) & 0x01;
-
-    tmp = status.position;
-
-    for(currentBit=0 ; currentBit<8 ; currentBit++)
+    while(byte1!=0)
     {
-        sum += (tmp >> currentBit) & 0x01;
+        sum += (byte1 & 0x01);
+        byte1 >>= 1;
     }
 
-    tmp = status.error;
-
-    if(tmp & SENSOR_ERROR_OCF_NOT_FINISHED == 0)
+    while(byte2!=0)
     {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_OVERFLOW != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_LINEARITY != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_MAG_DEC != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_MAG_INC != 0)
-    {
-        sum++;
+        sum += (byte2 & 0x01);
+        byte2 >>= 1;
     }
 
-    if(parity && ((sum & 0x01)!=0))
-    {
-        return TRUE;
-    }
-    if(!parity && ((sum & 0x01)==0))
-    {
-        return TRUE;
-    }
+    byte3 >>= 6;
 
-    return FALSE;
+    parity = byte3 & 0x01;
+
+    byte3 >>= 1;
+
+    sum += (byte3 & 0x01);
+
+    return parity == (sum & 0x01);
 }

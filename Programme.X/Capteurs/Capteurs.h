@@ -16,7 +16,7 @@
 
 SensorStatus getStatusOfSensor(Sensor sensor);
 
-BOOL checkParity(SensorStatus status, BIT parity);
+BOOL checkParity(UINT8 byte1, UINT8 byte2, UINT8 byte3);
 
 void prepareForSensorRead(void);
 

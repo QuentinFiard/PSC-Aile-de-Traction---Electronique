@@ -39,10 +39,12 @@
 rom float minSignalDurationSaved = -1;
 rom float maxSignalDurationSaved = -1;
 
+rom float PIDPeriodSaved = -1;
+
 rom PID_Coeffs PID_speed_saved = {-1,-1,-1};
 rom PID_Coeffs PID_position_saved = {-1,-1,-1};
 
-rom ChoixAsservissement choixAsservissement_saved = 0;
+rom ChoixAsservissement choixAsservissement_saved = {0,0,0};
 
 
  #pragma idata access accessram
@@ -58,19 +60,19 @@ static near volatile double positionForMotor3 = 0;
 
 static near volatile Moteur currentMotor = 0;
 
-static near volatile float minSignalDuration = 0;
-static near volatile float maxSignalDuration = 0;
-
-static ChoixAsservissement choixAsservissement = 0;
+static near volatile float PIDPeriod = 0;
 
 #pragma udata
 
 static volatile PID_Coeffs PID_speed;
 static volatile PID_Coeffs PID_position;
+static volatile ChoixAsservissement choixAsservissement;
+static volatile float minSignalDuration;
+static volatile float maxSignalDuration;
 
 #pragma code
 
-static void resetTimer20ms()
+static void resetTimer20ms(void)
 {
     WriteTimer3(WAITOFFSET);
 }
@@ -138,7 +140,7 @@ void openMotor(Moteur moteur)
     }
 }
 
-void prepareMotorControl()
+void prepareMotorControl(void)
 {
     resetTimer20ms();
 
@@ -149,13 +151,15 @@ void prepareMotorControl()
     eeprom_read_block((UINT8)&maxSignalDurationSaved, &maxSignalDuration, sizeof(float));
     eeprom_read_block((UINT8)&minSignalDurationSaved, &minSignalDuration, sizeof(float));
 
+    eeprom_read_block((UINT8)&PIDPeriodSaved, &PIDPeriod, sizeof(float));
+
     eeprom_read_block((UINT8)&PID_speed_saved, &PID_speed, sizeof(PID_Coeffs));
     eeprom_read_block((UINT8)&PID_position_saved, &PID_position, sizeof(PID_Coeffs));
 
     eeprom_read_block((UINT8)&choixAsservissement_saved, &choixAsservissement, sizeof(ChoixAsservissement));
 }
 
-static void prepareControlForCurrentMotor()
+static void prepareControlForCurrentMotor(void)
 {
     double ratio;
     UINT16 signalDuration;
@@ -306,12 +310,12 @@ void setMinSignalDuration(float duration)
     }
 }
 
-float readMaxSignalDuration()
+float readMaxSignalDuration(void)
 {
     return maxSignalDuration;
 }
 
-float readMinSignalDuration()
+float readMinSignalDuration(void)
 {
     return minSignalDuration;
 }
@@ -347,4 +351,18 @@ void setChoixAsservissement(ChoixAsservissement newChoix)
 {
     choixAsservissement = newChoix;
     eeprom_write_block(&choixAsservissement, (UINT8)&choixAsservissement_saved, sizeof(ChoixAsservissement));
+}
+
+void setPIDPeriod(float period)
+{
+    if(period<0.02 && period>400e-6)
+    {
+        PIDPeriod = period;
+        eeprom_write_block(&PIDPeriod, (UINT8)&PIDPeriodSaved, sizeof(float));
+    }
+}
+
+float readPIDPeriod(void)
+{
+    return PIDPeriod;
 }
