@@ -28,7 +28,7 @@ static volatile BOOL isSensorReadReady = FALSE;
 
 void prepareForSensorRead(void)
 {
-    OpenSPI(SPI_FOSC_64, MODE_10, SMPEND);
+    OpenSPI(SPI_FOSC_64, MODE_00, SMPEND);
 
     //Initialisation des ports de sélection des capteurs
     LATA |= 0x3F; // Waiting state is high
