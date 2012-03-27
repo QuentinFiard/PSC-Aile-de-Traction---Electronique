@@ -43,6 +43,7 @@ UINT8 nextEmptyByte = 0;
 // MOTOR_CONTROL
 static BOOL waitingForActionChoice = FALSE;
 static BOOL waitingForMotorID = FALSE;
+static BOOL waitingForAsservissementType = FALSE;
 
 #pragma udata
 
@@ -52,10 +53,11 @@ char USB_Out_Buffer[64];
 // MOTOR_CONTROL
 static MC_ACTION action;
 static Moteur motorID;
+static TypeAsservissement typeAsservissement;
 
 static void handleMotorControlRequest(void);
 
-void loadNewData()
+void loadNewData(void)
 {
     if(dataAvailable==0)
     {
@@ -152,7 +154,7 @@ static void continueWithCurrentMode(void)
     }
 }
 
-static void handleMotorControlAction()
+static void handleMotorControlAction(void)
 {
     if(action == MC_SET_POSITION)
     {
@@ -328,27 +330,60 @@ static void handleMotorControlAction()
     }
     else if(action == MC_READ_CHOIX_ASSERVISSEMENT)
     {
-        USB_Out_Buffer[0] = readChoixAsservissement();
+        ChoixAsservissement choix = readChoixAsservissement();
+        UINT8 size = 1;
+        USB_Out_Buffer[0] = choix.type;
+        
 
-        putUSBUSART(USB_Out_Buffer,1);
+        if(choix.type != ASSERVISSEMENT_SANS)
+        {
+            USB_Out_Buffer[1] = choix.motor;
+            USB_Out_Buffer[2] = choix.sensor;
+            size = 3;
+        }
+
+        putUSBUSART(USB_Out_Buffer,size);
 
         currentMode = PR_NOREQUEST;
     }
     else if(action == MC_SET_CHOIX_ASSERVISSEMENT)
     {
-        if(dataAvailable<1)
-    	{
-            loadNewData();
-    	}
-    	if(dataAvailable>=1)
-    	{
-            setChoixAsservissement(USB_In_Buffer[currentByte]);
+        if(typeAsservissement != ASSERVISSEMENT_SANS)
+        {
+            if(dataAvailable<2)
+            {
+                loadNewData();
+            }
+            if(dataAvailable>=2)
+            {
+                ChoixAsservissement choix;
 
-            currentByte = (currentByte+1)%64;
-            dataAvailable -= 1;
+                choix.type = typeAsservissement;
+
+                choix.motor = USB_In_Buffer[currentByte];
+                currentByte = (currentByte+1)%64;
+                dataAvailable -= 1;
+
+                choix.sensor = USB_In_Buffer[currentByte];
+                currentByte = (currentByte+1)%64;
+                dataAvailable -= 1;
+
+                setChoixAsservissement(choix);
+
+                currentMode = PR_NOREQUEST;
+            }
+        }
+        else
+        {
+            ChoixAsservissement choix;
+
+            choix.type = typeAsservissement;
+
+            setChoixAsservissement(choix);
 
             currentMode = PR_NOREQUEST;
         }
+        
     }
 }
 
@@ -373,6 +408,14 @@ static void handleMotorControlRequest(void)
             {
                 waitingForMotorID = FALSE;
             }
+            if(action == MC_SET_CHOIX_ASSERVISSEMENT)
+            {
+                waitingForAsservissementType = TRUE;
+            }
+            else
+            {
+                waitingForAsservissementType = FALSE;
+            }
             
             currentByte = (currentByte+1)%64;
             dataAvailable--;
@@ -389,6 +432,21 @@ static void handleMotorControlRequest(void)
             waitingForMotorID = FALSE;
             motorID = USB_In_Buffer[currentByte];
             
+            currentByte = (currentByte+1)%64;
+            dataAvailable--;
+        }
+    }
+    if(waitingForAsservissementType)
+    {
+        if(dataAvailable==0)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=1)
+    	{
+            waitingForAsservissementType = FALSE;
+            typeAsservissement = USB_In_Buffer[currentByte];
+
             currentByte = (currentByte+1)%64;
             dataAvailable--;
         }

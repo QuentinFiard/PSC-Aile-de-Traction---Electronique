@@ -182,11 +182,7 @@ void main(void)
 
     LATB = 0;
 
-    setRelativePositionObjectiveForMotor(1,0);
-
     prepareForSensorRead();
-
-    status = getStatusOfSensor(5);
 
     while(1)
     {

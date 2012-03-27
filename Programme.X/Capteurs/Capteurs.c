@@ -36,7 +36,7 @@
 #define CLOCK_PORT LATBbits.LATB1
 #define DATA_IN PORTBbits.RB0;
 
-#define SPI_TIME_OFFSET 5
+#define SPI_TIME_OFFSET 2
 
 static volatile BOOL isSensorReadReady = FALSE;
 
@@ -77,11 +77,19 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
     selectSensor(sensor);
 
-    // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 100)
+    // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 20)
 
-    Delay10TCYx(100);
+    Delay10TCYx(2);
 
     res.position = 0;
+
+    CLOCK_PORT = 0;
+
+    Delay10TCYx(SPI_TIME_OFFSET);
+
+    CLOCK_PORT = 1;
+
+    Delay10TCYx(SPI_TIME_OFFSET);
 
     for(i=0 ; i<12 ; i++)
     {
@@ -91,14 +99,14 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
         Delay10TCYx(SPI_TIME_OFFSET);
 
+        res.position += DATA_IN;
+
         CLOCK_PORT = 1;
 
         Delay10TCYx(SPI_TIME_OFFSET);
-
-        res.position += DATA_IN;
     }
 
-    for(i=0 ; i<6 ; i++)
+    for(i=0 ; i<5 ; i++)
     {
         byte3 <<= 1;
 
@@ -106,12 +114,19 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
         Delay10TCYx(SPI_TIME_OFFSET);
 
+        byte3 += DATA_IN;
+
         CLOCK_PORT = 1;
 
         Delay10TCYx(SPI_TIME_OFFSET);
 
-        byte3 += DATA_IN;
+        
     }
+
+    Delay10TCYx(SPI_TIME_OFFSET);
+
+    byte3 <<= 1;
+    byte3 += DATA_IN;
 
     /*byte1 = ReadSPI();
     byte2 = ReadSPI();
