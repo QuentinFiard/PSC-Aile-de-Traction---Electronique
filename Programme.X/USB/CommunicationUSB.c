@@ -135,7 +135,7 @@ static void continueWithCurrentMode(void)
         }
     	if(dataAvailable>=1)
     	{
-            SensorStatus toSend;
+            SensorDataPacket toSend;
             Sensor sensor;
 
             sensor = USB_In_Buffer[currentByte];
@@ -144,12 +144,11 @@ static void continueWithCurrentMode(void)
 
             currentMode = PR_NOREQUEST;
 
-            toSend = getStatusOfSensor(sensor);
+            toSend = getDataPacketForSensor(sensor);
 
-            *((UINT16*)USB_Out_Buffer) = toSend.position;
-            USB_Out_Buffer[2] = toSend.error;
+            *((SensorDataPacket*)USB_Out_Buffer) = toSend;
 
-            putUSBUSART(USB_Out_Buffer,3);
+            putUSBUSART(USB_Out_Buffer,sizeof(SensorDataPacket));
     	}
     }
 }
@@ -168,7 +167,7 @@ static void handleMotorControlAction(void)
 
             position = *((float*)(USB_In_Buffer+currentByte));
 
-            setPositionObjectiveForMotor(motorID,position);
+            setRelativePositionObjectiveForMotor(position,motorID);
 
             currentMode = PR_NOREQUEST;
             

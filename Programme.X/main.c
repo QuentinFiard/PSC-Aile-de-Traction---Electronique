@@ -139,7 +139,9 @@
 
 #endif
 
+#pragma idata access accessram
 
+near volatile BOOL shouldUpdateSensors = FALSE;
 
 
 /** DECLARATIONS ***************************************************/
@@ -182,11 +184,15 @@ void main(void)
 
     LATB = 0;
 
+    prepareMotorControl();
     prepareForSensorRead();
 
     while(1)
     {
-    	ProcessUSBData();
+    	if(shouldUpdateSensors)
+        {
+            updateSensors();
+        }
     }
 }//end main
 

@@ -23,7 +23,7 @@
 #define MIN_SIGNAL_DURATION 1.250 //Value in ms
 #define MAX_SIGNAL_DURATION 1.850 //Value in ms
 
-#define TICKS_PER_MILLISECONDS 12000
+#define TICKS_PER_SECONDS 12000000
 
 #define SIGNAL_TIMER_INTERRUPT_ENABLE INTCONbits.TMR0IE
 #define CONTROL_PERIOD_INTERRUPT_ENABLE PIE2bits.TMR3IE
@@ -61,6 +61,8 @@ static near volatile double positionForMotor3 = 0;
 static near volatile Moteur currentMotor = 0;
 
 static near volatile float PIDPeriod = 0;
+
+static near BOOL firstStart = TRUE;
 
 #pragma udata
 
@@ -148,15 +150,21 @@ void prepareMotorControl(void)
     MOTEUR_SELECT1_DIRECTION = OUTPUT;
     MOTEUR_SIGNAL_DIRECTION = OUTPUT;
 
-    eeprom_read_block((UINT8)&maxSignalDurationSaved, &maxSignalDuration, sizeof(float));
-    eeprom_read_block((UINT8)&minSignalDurationSaved, &minSignalDuration, sizeof(float));
+    if(firstStart)
+    {
+        IPR2bits.TMR3IP = 0;
 
-    eeprom_read_block((UINT8)&PIDPeriodSaved, &PIDPeriod, sizeof(float));
+        firstStart = FALSE;
+        eeprom_read_block((UINT8)&maxSignalDurationSaved, &maxSignalDuration, sizeof(float));
+        eeprom_read_block((UINT8)&minSignalDurationSaved, &minSignalDuration, sizeof(float));
 
-    eeprom_read_block((UINT8)&PID_speed_saved, &PID_speed, sizeof(PID_Coeffs));
-    eeprom_read_block((UINT8)&PID_position_saved, &PID_position, sizeof(PID_Coeffs));
+        eeprom_read_block((UINT8)&PIDPeriodSaved, &PIDPeriod, sizeof(float));
 
-    eeprom_read_block((UINT8)&choixAsservissement_saved, &choixAsservissement, sizeof(ChoixAsservissement));
+        eeprom_read_block((UINT8)&PID_speed_saved, &PID_speed, sizeof(PID_Coeffs));
+        eeprom_read_block((UINT8)&PID_position_saved, &PID_position, sizeof(PID_Coeffs));
+
+        eeprom_read_block((UINT8)&choixAsservissement_saved, &choixAsservissement, sizeof(ChoixAsservissement));
+    }
 }
 
 static void prepareControlForCurrentMotor(void)
@@ -167,7 +175,7 @@ static void prepareControlForCurrentMotor(void)
     openMotor(currentMotor);
 
     ratio = positionObjectiveForMotor(currentMotor);
-    signalDuration = (TICKS_PER_MILLISECONDS*((ratio+1)*MAX_SIGNAL_DURATION + (1-ratio)*MIN_SIGNAL_DURATION) + 1)/2;
+    signalDuration = (TICKS_PER_SECONDS*((ratio+1)*maxSignalDuration + (1-ratio)*minSignalDuration) + 1)/2;
     WriteTimer0(~signalDuration);
     MOTEUR_SIGNAL = 1;
 }
@@ -197,14 +205,12 @@ void stopMotorSignal()
 void setRelativePositionObjectiveForMotor(double ratio, Moteur moteur)
 {
     BOOL oldIsActive = isMotorTimerActive;
-    double check;
 
     isMotorTimerActive = TRUE;
 
     isControllingMotor[moteur] = TRUE;
     setPositionObjectiveForMotor(moteur,ratio);
     currentMotor = moteur;
-    check = positionObjectiveForMotor(moteur);
 
     if(!oldIsActive)
     {
@@ -278,7 +284,7 @@ void stopControllingMotor(Moteur moteur)
 
 void setMaxSignalDuration(float duration)
 {
-    if(duration<5.000 && duration>0.100)
+    if(duration<0.005 && duration>0.0001)
     {
         maxSignalDuration = duration;
         eeprom_write_block(&maxSignalDuration, (UINT8)&maxSignalDurationSaved, sizeof(float));
@@ -295,7 +301,7 @@ void setMaxSignalDuration(float duration)
 
 void setMinSignalDuration(float duration)
 {
-    if(duration<5.000 && duration>0.100)
+    if(duration<0.005 && duration>0.0001)
     {
         minSignalDuration = duration;
         eeprom_write_block(&minSignalDuration, (UINT8)&minSignalDurationSaved, sizeof(float));

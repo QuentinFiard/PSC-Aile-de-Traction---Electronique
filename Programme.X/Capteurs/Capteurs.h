@@ -14,10 +14,14 @@
 
 #include "CommunicationProtocol.h"
 
-SensorStatus getStatusOfSensor(Sensor sensor);
+SensorDataPacket getDataPacketForSensor(Sensor sensor);
 
-BOOL checkParity(SensorStatus status, BIT parity);
+BOOL checkParity(UINT16 position, UINT8 status);
 
 void prepareForSensorRead(void);
+
+void setReadTime(UINT16 time);
+
+void updateSensors(void);
 
 #endif

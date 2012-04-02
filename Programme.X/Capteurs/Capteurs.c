@@ -9,6 +9,10 @@
 #include <spi.h>
 #include "./Capteurs.h"
 #include <delays.h>
+#include <math.h>
+#include <timers.h>
+#include "CommunicationProtocol.h"
+#include "CommunicationUSB.h"
 
 /*
 #define OCF ((byte2 & 0x08) == 0)
@@ -33,12 +37,30 @@
 #define SENSOR_PORT4 LATAbits.LATA4
 #define SENSOR_PORT5 LATAbits.LATA5
 
+#define CLOCK_DIRECTION TRISBbits.RB1
 #define CLOCK_PORT LATBbits.LATB1
+#define DATA_DIRECTION TRISBbits.RB0
 #define DATA_IN PORTBbits.RB0;
 
-#define SPI_TIME_OFFSET 2
+#define SPI_TIME_OFFSET Delay10TCYx(2);
+#define SPI_TIME_OFFSET_UP Delay10TCYx(7);
 
-static volatile BOOL isSensorReadReady = FALSE;
+extern BOOL shouldUpdateSensors;
+
+#pragma idata
+
+static BOOL isSensorReadReady = FALSE;
+
+static INT8 nextStatusIndex[6] = {-1,-1,-1,-1,-1,-1};
+static INT8 nextTimeIndex[6] = {-1,-1,-1,-1,-1,-1};
+
+#pragma udata
+
+static SensorStatus lastStatus[6][NUM_READ];
+static UINT16 timeOffset[6][NUM_TIME];
+static UINT16 lastDate[6];
+
+static volatile UINT16 readTime;
 
 void prepareForSensorRead(void)
 {
@@ -49,12 +71,26 @@ void prepareForSensorRead(void)
     ADCON1 |= 0x0F;
     TRISA &= 0xC0; // Ports en sortie
 
-    TRISBbits.RB0 = 1; // RB0 en entrée
+    DATA_DIRECTION = 1; // Data in
     CLOCK_PORT = 1;
-    TRISBbits.RB1 = 0; // RB1 en sortie
+    CLOCK_DIRECTION = 0; // RB1 en sortie
 
+    OpenTimer1(     TIMER_INT_OFF
+                &   T1_16BIT_RW
+                &   T1_SOURCE_INT
+                &   T1_PS_1_2
+                &   T1_OSC1EN_OFF
+                &   T1_SYNC_EXT_OFF); // Used to measure time between measurements
+
+    IPR1bits.TMR2IP = 0;
+
+    OpenTimer2(     TIMER_INT_ON
+                &   T2_PS_1_16
+                &   T2_POST_1_16);   // Used to specify time between measurements
 
     isSensorReadReady = TRUE;
+
+    //shouldUpdateSensors = TRUE;
 }
 
 static void selectSensor(Sensor sensor)
@@ -64,69 +100,106 @@ static void selectSensor(Sensor sensor)
     LATA -= (0x01 << sensor);
 }
 
-SensorStatus getStatusOfSensor(Sensor sensor)
+UINT16 timeOffsetBetweenDate(UINT16 date1, UINT16 date2)
 {
-    UINT8 byte1,byte2,byte3,test;
+    if(date2>= date1)
+    {
+        return date2-date1;
+    }
+    else
+    {
+        return 0x10000 - (date1-date2);
+    }
+}
+
+void updateSensorStatus(SensorStatus status, Sensor sensor)
+{
+    if(nextStatusIndex[sensor]==-1)
+    {
+        lastStatus[sensor][0] = status;
+        nextStatusIndex[sensor] = 1;
+
+        nextTimeIndex[sensor] = 0;
+        lastDate[sensor] = readTime;
+    }
+    else
+    {
+        lastStatus[sensor][nextStatusIndex[sensor]] = status;
+
+        timeOffset[sensor][nextTimeIndex[sensor]] = timeOffsetBetweenDate(lastDate[sensor],readTime);
+
+        lastDate[sensor] = readTime;
+
+        nextTimeIndex[sensor] = (nextTimeIndex[sensor]+1)%NUM_TIME;
+        nextStatusIndex[sensor] = (nextStatusIndex[sensor] + 1)%NUM_READ;
+    }
+}
+
+void updateStatusOfSensor(Sensor sensor)
+{
+    UINT8 byte3;
     UINT8 i;
     SensorStatus res;
+    
+    BIT interruptEnable;
 
     if(!isSensorReadReady)
     {
         prepareForSensorRead();
     }
 
+    res.sensor = sensor;
+
+    interruptEnable = INTCONbits.GIEH;
+    INTCONbits.GIEH = 0; //disable interrupts
+
+    CLOCK_PORT = 0;
+
+    SPI_TIME_OFFSET
+
+    readTime = ReadTimer1();
+
     selectSensor(sensor);
 
     // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 20)
 
-    Delay10TCYx(2);
+    SPI_TIME_OFFSET
 
     res.position = 0;
-
-    CLOCK_PORT = 0;
-
-    Delay10TCYx(SPI_TIME_OFFSET);
-
-    CLOCK_PORT = 1;
-
-    Delay10TCYx(SPI_TIME_OFFSET);
 
     for(i=0 ; i<12 ; i++)
     {
         res.position <<= 1;
 
-        CLOCK_PORT = 0;
-
-        Delay10TCYx(SPI_TIME_OFFSET);
-
-        res.position += DATA_IN;
-
         CLOCK_PORT = 1;
 
-        Delay10TCYx(SPI_TIME_OFFSET);
+        SPI_TIME_OFFSET_UP
+
+        CLOCK_PORT = 0;
+
+        SPI_TIME_OFFSET
+
+        res.position += DATA_IN;
     }
 
-    for(i=0 ; i<5 ; i++)
+    byte3 = 0;
+
+    for(i=0 ; i<6 ; i++)
     {
         byte3 <<= 1;
 
+        CLOCK_PORT = 1;
+
+        SPI_TIME_OFFSET_UP
+
         CLOCK_PORT = 0;
 
-        Delay10TCYx(SPI_TIME_OFFSET);
+        SPI_TIME_OFFSET
 
         byte3 += DATA_IN;
 
-        CLOCK_PORT = 1;
 
-        Delay10TCYx(SPI_TIME_OFFSET);
-
-        
     }
-
-    Delay10TCYx(SPI_TIME_OFFSET);
-
-    byte3 <<= 1;
-    byte3 += DATA_IN;
 
     /*byte1 = ReadSPI();
     byte2 = ReadSPI();
@@ -134,13 +207,19 @@ SensorStatus getStatusOfSensor(Sensor sensor)
 
     LATA |= 0x3F; // Return to waiting state
 
+    SPI_TIME_OFFSET
+
+    CLOCK_PORT = 1;
+
+    INTCONbits.GIEH=interruptEnable;
+
+    ProcessUSBData();
+
     /*res.position = 0;
 
     res.position += byte1;
     res.position <<= 4;
     res.position += (byte2 >> 4);*/
-
-    res.sensor = sensor;
 
     res.error = 0;
 
@@ -165,66 +244,82 @@ SensorStatus getStatusOfSensor(Sensor sensor)
         res.error += SENSOR_ERROR_MAG_INC;
     }
 
-    if(!checkParity(res,PARITY))
+    if(!checkParity(res.position,byte3))
     {
         res.error += SENSOR_ERROR_PARITY;
     }
 
-    //res.position = byte1;
-    //res.position *= 0x100;
-    //res.position += byte2;
-    //res.error = byte3;
+    if(!OCF)
+    {
+        res.error = byte3;
+        updateSensorStatus(res,sensor);
+    }
+}
+
+SensorDataPacket getDataPacketForSensor(Sensor sensor)
+{
+    SensorDataPacket res;
+    UINT8 i;
+    UINT8 index;
+
+    res.sensor = sensor;
+    
+    index = nextStatusIndex[sensor];
+
+    for(i=0 ; i<NUM_READ ; i++)
+    {
+        res.lastStatus[i] = lastStatus[sensor][index];
+        index = (index+1)%NUM_READ;
+    }
+
+    index = nextTimeIndex[sensor];
+
+    for(i=0 ; i<NUM_TIME ; i++)
+    {
+        res.timeOffset[i] = timeOffset[sensor][index];
+        index = (index+1)%NUM_READ;
+    }
 
     return res;
 }
 
-BOOL checkParity(SensorStatus status, BOOL parity)
+BOOL checkParity(UINT16 position, UINT8 status)
 {
     UINT8 sum = 0;
-    UINT8 tmp = status.position >> 8;
-    UINT8 currentBit;
+    
+    BOOL parity = status & 0x01;
+    
+    status &= 0xFE;
 
-    sum += tmp & 0x01;
-    sum += (tmp >> 1) & 0x01;
-
-    tmp = status.position;
-
-    for(currentBit=0 ; currentBit<8 ; currentBit++)
+    while(position!=0)
     {
-        sum += (tmp >> currentBit) & 0x01;
+        sum += position & 0x0001;
+        position >>= 1;
     }
 
-    tmp = status.error;
-
-    if(tmp & SENSOR_ERROR_OCF_NOT_FINISHED == 0)
+    while(status!=0)
     {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_OVERFLOW != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_LINEARITY != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_MAG_DEC != 0)
-    {
-        sum++;
-    }
-    if(tmp & SENSOR_ERROR_MAG_INC != 0)
-    {
-        sum++;
+        sum += status & 0x0001;
+        status >>= 1;
     }
 
-    if(parity && ((sum & 0x01)!=0))
-    {
-        return FALSE;
-    }
-    if(!parity && ((sum & 0x01)==0))
-    {
-        return FALSE;
-    }
+    return parity == (sum & 0x01);
+}
 
-    return TRUE;
+void setReadTime(UINT16 time)
+{
+    readTime = time;
+}
+
+void updateSensors(void)
+{
+    UINT8 i;
+    shouldUpdateSensors = FALSE;
+
+    WriteTimer2(0x0);
+
+    for(i=0 ; i<6 ; i++)
+    {
+        updateStatusOfSensor(i);
+    }
 }
