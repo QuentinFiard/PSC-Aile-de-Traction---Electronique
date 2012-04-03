@@ -216,11 +216,9 @@ void updateSensorStatus(SensorStatus status, Sensor sensor)
 
 void updateStatusOfSensor(Sensor sensor)
 {
-    UINT8 byte3,test;
+    UINT8 byte3;
     UINT8 i;
     SensorStatus res;
-    
-    BIT interruptEnable;
 
     if(!isSensorReadReady)
     {
@@ -228,9 +226,6 @@ void updateStatusOfSensor(Sensor sensor)
     }
 
     res.sensor = sensor;
-
-    interruptEnable = INTCONbits.GIEH;
-    INTCONbits.GIEH = 0; //disable interrupts
 
     CLOCK_PORT = 1;
 
@@ -255,8 +250,6 @@ void updateStatusOfSensor(Sensor sensor)
 
         SPI_TIME_OFFSET_UP
 
-        //res.position += DATA_IN;
-
         CLOCK_PORT = 0;
 
         SPI_TIME_OFFSET
@@ -274,8 +267,6 @@ void updateStatusOfSensor(Sensor sensor)
 
         SPI_TIME_OFFSET_UP
 
-        //byte3 += DATA_IN;
-
         CLOCK_PORT = 0;
 
         SPI_TIME_OFFSET
@@ -284,27 +275,6 @@ void updateStatusOfSensor(Sensor sensor)
 
 
     }
-
-    /*test = 0;
-
-    for(i=0 ; i<8 ; i++)
-    {
-        test <<= 1;
-
-        CLOCK_PORT = 1;
-
-        SPI_TIME_OFFSET_UP
-
-        //byte3 += DATA_IN;
-
-        CLOCK_PORT = 0;
-
-        SPI_TIME_OFFSET
-
-        test += DATA_IN;
-
-
-    }*/
     
     SPI_TIME_OFFSET
 
@@ -313,8 +283,6 @@ void updateStatusOfSensor(Sensor sensor)
     SPI_TIME_OFFSET
 
     CLOCK_PORT = 1;
-
-    INTCONbits.GIEH=interruptEnable;
 
     res.error = 0;
 
@@ -344,7 +312,7 @@ void updateStatusOfSensor(Sensor sensor)
         res.error += SENSOR_ERROR_PARITY;
     }
 
-    //if(res.error == 0)
+    if(res.error == 0 || res.error == 48)
     {
         updateSensorStatus(res,sensor);
     }
