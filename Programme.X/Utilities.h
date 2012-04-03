@@ -11,3 +11,5 @@
 void eeprom_write_block(void *ptr, UINT8 addr, UINT8 len);
 
 void eeprom_read_block(UINT8 addr, void *res, UINT8 len);
+
+INT16 offsetBetweenAngle(UINT16 angle1, UINT16 angle2);

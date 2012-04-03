@@ -8,6 +8,7 @@
 
 #include "Utilities.h"
 #include "Compiler.h"
+#include "CommunicationProtocol.h"
 
 static void eeprom_write(UINT8 addr, UINT8 byte)
 {
@@ -57,4 +58,23 @@ void eeprom_read_block(UINT8 addr, void *res, UINT8 len)
         *data = eeprom_read(addr++);
         data++;
     }
+}
+
+INT16 offsetBetweenAngle(UINT16 angle1, UINT16 angle2)
+{
+    INT16 offset = angle2 - angle1;
+
+    if(fabs(offset) > MAX_SENSOR_ANGLE/2)
+    {
+        if(offset>0)
+        {
+            return offset - MAX_SENSOR_ANGLE;
+        }
+        else
+        {
+            return offset + MAX_SENSOR_ANGLE;
+        }
+    }
+
+    return offset;
 }

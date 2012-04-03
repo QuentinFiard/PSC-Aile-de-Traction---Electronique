@@ -24,4 +24,8 @@ void setReadTime(UINT16 time);
 
 void updateSensors(void);
 
+float getSpeedAtSensor(Sensor sensor);
+
+UINT16 getPositionAtSensor(Sensor sensor);
+
 #endif

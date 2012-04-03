@@ -13,6 +13,9 @@
 #include <timers.h>
 #include "CommunicationProtocol.h"
 #include "CommunicationUSB.h"
+#include "Utilities.h"
+
+#define M_PI 3.1415926535897932384626433
 
 /*
 #define OCF ((byte2 & 0x08) == 0)
@@ -45,22 +48,34 @@
 #define SPI_TIME_OFFSET Delay10TCYx(2);
 #define SPI_TIME_OFFSET_UP Delay10TCYx(7);
 
+#define PROPAGATION_DELAY 0.000384
+
+#define NUM_SPEED 10
+
 extern BOOL shouldUpdateSensors;
 
 #pragma idata
 
 static BOOL isSensorReadReady = FALSE;
 
-static INT8 nextStatusIndex[6] = {-1,-1,-1,-1,-1,-1};
+static INT8 nextAngleIndex[6] = {-1,-1,-1,-1,-1,-1};
 static INT8 nextTimeIndex[6] = {-1,-1,-1,-1,-1,-1};
 
-#pragma udata
+static UINT8 nextSpeedIndex[6] = {0,0,0,0,0,0};
+static UINT8 numSpeed[6] = {0,0,0,0,0,0};
 
-static SensorStatus lastStatus[6][NUM_READ];
-static UINT16 timeOffset[6][NUM_TIME];
+#pragma udata Capteurs
+
+static UINT16 lastAngle[6][3];
+static UINT16 timeOffset[6][2];
 static UINT16 lastDate[6];
+static float vitesseRotation[6];
 
 static volatile UINT16 readTime;
+
+#pragma udata Capteurs2
+
+static float lastSpeed[6][NUM_SPEED];
 
 void prepareForSensorRead(void)
 {
@@ -112,26 +127,90 @@ UINT16 timeOffsetBetweenDate(UINT16 date1, UINT16 date2)
     }
 }
 
+void calculVitesseRotation(Sensor sensor)
+{
+    UINT8 timeIndex,angleIndex,angleRefIndex;
+    float d10,d20,d21;
+    float y0,y1,y2;
+
+    timeIndex = nextTimeIndex[sensor];
+    angleRefIndex = nextAngleIndex[sensor];
+    angleIndex = angleRefIndex+1;
+    angleIndex %= 3;
+
+    d10 = timeOffset[sensor][timeIndex] * SECONDS_PER_TIME_QUANTA;
+    timeIndex++;
+    timeIndex %= 2;
+    d21 = timeOffset[sensor][timeIndex] * SECONDS_PER_TIME_QUANTA;
+    d20 = d10 + d21;
+
+    if(d10>0 && d21>0)
+    {
+        float speed;
+
+        y0 = 0;
+        y1 = offsetBetweenAngle(lastAngle[sensor][angleRefIndex],lastAngle[sensor][angleIndex]) * 2 * M_PI / MAX_SENSOR_ANGLE;
+        angleRefIndex = angleIndex;
+        angleIndex++;
+        angleIndex %= 3;
+        y2 = y0 + offsetBetweenAngle(lastAngle[sensor][angleRefIndex],lastAngle[sensor][angleIndex]) * 2 * M_PI / MAX_SENSOR_ANGLE;
+
+        //speed = y0*d21/(d10*d20) - y1*d20/(d10*d21) + y2*(d21+d20)/(d20*d21);
+
+        speed = y2/d20;
+
+        if(numSpeed[sensor]<NUM_SPEED)
+        {
+            lastSpeed[sensor][nextSpeedIndex[sensor]] = speed;
+
+            vitesseRotation[sensor] *= numSpeed[sensor];
+            vitesseRotation[sensor] += speed;
+            numSpeed[sensor]++;
+            vitesseRotation[sensor] /= numSpeed[sensor];
+
+            nextSpeedIndex[sensor]++;
+            nextSpeedIndex[sensor] %= NUM_SPEED;
+        }
+        else
+        {
+            vitesseRotation[sensor] *= NUM_SPEED;
+            vitesseRotation[sensor] -= lastSpeed[sensor][nextSpeedIndex[sensor]];
+
+            lastSpeed[sensor][nextSpeedIndex[sensor]] = speed;
+
+            vitesseRotation[sensor] += speed;
+            vitesseRotation[sensor] /= NUM_SPEED;
+            
+            nextSpeedIndex[sensor]++;
+            nextSpeedIndex[sensor] %= NUM_SPEED;
+        }
+    }
+}
+
 void updateSensorStatus(SensorStatus status, Sensor sensor)
 {
-    if(nextStatusIndex[sensor]==-1)
+    if(nextAngleIndex[sensor]==-1)
     {
-        lastStatus[sensor][0] = status;
-        nextStatusIndex[sensor] = 1;
+        lastAngle[sensor][0] = status.position;
+        nextAngleIndex[sensor] = 1;
 
         nextTimeIndex[sensor] = 0;
         lastDate[sensor] = readTime;
     }
     else
     {
-        lastStatus[sensor][nextStatusIndex[sensor]] = status;
+        lastAngle[sensor][nextAngleIndex[sensor]] = status.position;
 
         timeOffset[sensor][nextTimeIndex[sensor]] = timeOffsetBetweenDate(lastDate[sensor],readTime);
 
         lastDate[sensor] = readTime;
 
-        nextTimeIndex[sensor] = (nextTimeIndex[sensor]+1)%NUM_TIME;
-        nextStatusIndex[sensor] = (nextStatusIndex[sensor] + 1)%NUM_READ;
+        nextTimeIndex[sensor]++;
+        nextTimeIndex[sensor] %= 2;
+        nextAngleIndex[sensor]++;
+        nextAngleIndex[sensor] %= 3;
+
+        calculVitesseRotation(sensor);
     }
 }
 
@@ -153,16 +232,9 @@ void updateStatusOfSensor(Sensor sensor)
     interruptEnable = INTCONbits.GIEH;
     INTCONbits.GIEH = 0; //disable interrupts
 
-    if(sensor==0)
-    {
-        Nop();
-    }
-
     CLOCK_PORT = 1;
 
     SPI_TIME_OFFSET
-    //SPI_TIME_OFFSET
-    //SPI_TIME_OFFSET
 
     readTime = ReadTimer1();
 
@@ -171,9 +243,6 @@ void updateStatusOfSensor(Sensor sensor)
     // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 20)
 
     SPI_TIME_OFFSET
-    //SPI_TIME_OFFSET
-    //SPI_TIME_OFFSET
-    //SPI_TIME_OFFSET
     
 
     res.position = 0;
@@ -216,7 +285,7 @@ void updateStatusOfSensor(Sensor sensor)
 
     }
 
-    test = 0;
+    /*test = 0;
 
     for(i=0 ; i<8 ; i++)
     {
@@ -235,13 +304,7 @@ void updateStatusOfSensor(Sensor sensor)
         test += DATA_IN;
 
 
-    }
-
-    /*byte1 = ReadSPI();
-    byte2 = ReadSPI();
-    byte3 = ReadSPI();*/    
-
-    
+    }*/
     
     SPI_TIME_OFFSET
 
@@ -252,12 +315,6 @@ void updateStatusOfSensor(Sensor sensor)
     CLOCK_PORT = 1;
 
     INTCONbits.GIEH=interruptEnable;
-
-    /*res.position = 0;
-
-    res.position += byte1;
-    res.position <<= 4;
-    res.position += (byte2 >> 4);*/
 
     res.error = 0;
 
@@ -287,14 +344,8 @@ void updateStatusOfSensor(Sensor sensor)
         res.error += SENSOR_ERROR_PARITY;
     }
 
-    if(sensor==0)
+    //if(res.error == 0)
     {
-        Nop();
-    }
-
-    if(!OCF)
-    {
-        res.error = byte3;
         updateSensorStatus(res,sensor);
     }
 }
@@ -302,26 +353,21 @@ void updateStatusOfSensor(Sensor sensor)
 SensorDataPacket getDataPacketForSensor(Sensor sensor)
 {
     SensorDataPacket res;
-    UINT8 i;
-    UINT8 index;
+    double position;
 
     res.sensor = sensor;
+
+    res.vitesseRotation = vitesseRotation[sensor];
+
+    position = lastAngle[sensor][(nextAngleIndex[sensor]+2)%3];
+
+    position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
+
+    res.position = floor(position);
+
+    res.position %= MAX_SENSOR_ANGLE;
+
     
-    index = nextStatusIndex[sensor];
-
-    for(i=0 ; i<NUM_READ ; i++)
-    {
-        res.lastStatus[i] = lastStatus[sensor][index];
-        index = (index+1)%NUM_READ;
-    }
-
-    index = nextTimeIndex[sensor];
-
-    for(i=0 ; i<NUM_TIME ; i++)
-    {
-        res.timeOffset[i] = timeOffset[sensor][index];
-        index = (index+1)%NUM_READ;
-    }
 
     return res;
 }
@@ -365,4 +411,23 @@ void updateSensors(void)
     {
         updateStatusOfSensor(i);
     }
+}
+
+float getSpeedAtSensor(Sensor sensor)
+{
+    return vitesseRotation[sensor];
+}
+
+UINT16 getPositionAtSensor(Sensor sensor)
+{
+    double position;
+    UINT16 res;
+
+    position = lastAngle[sensor][(nextAngleIndex[sensor]+2)%3];
+
+    position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
+
+    res = floor(position);
+
+    res %= MAX_SENSOR_ANGLE;
 }

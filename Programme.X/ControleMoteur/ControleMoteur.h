@@ -35,11 +35,11 @@ double positionObjectiveForMotor(Moteur moteur);
 void setPositionObjectiveForMotor(Moteur moteur,double objective);
 
 void setMaxSignalDuration(float duration);
-
+void setNeutralSignalDuration(float duration);
 void setMinSignalDuration(float duration);
 
 float readMaxSignalDuration(void);
-
+float readNeutralSignalDuration(void);
 float readMinSignalDuration(void);
 
 PID_Coeffs* readSpeedPIDCoeffs(void);
@@ -55,3 +55,5 @@ void setChoixAsservissement(ChoixAsservissement choix);
 
 void setPIDPeriod(float period);
 float readPIDPeriod(void);
+
+void updateControl(void);

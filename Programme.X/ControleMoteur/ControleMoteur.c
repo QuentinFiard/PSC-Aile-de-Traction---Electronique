@@ -7,8 +7,10 @@
 //
 
 #include "ControleMoteur.h"
+#include "Capteurs.h"
 #include <timers.h>
 #include "Utilities.h"
+#include <math.h>
 
 #define MOTEUR_SELECT0  LATBbits.LATB4
 #define MOTEUR_SELECT1  LATBbits.LATB2
@@ -20,15 +22,13 @@
 
 #define OUTPUT 0
 
-#define MIN_SIGNAL_DURATION 1.250 //Value in ms
-#define MAX_SIGNAL_DURATION 1.850 //Value in ms
-
 #define TICKS_PER_SECONDS 12000000
 
 #define SIGNAL_TIMER_INTERRUPT_ENABLE INTCONbits.TMR0IE
 #define CONTROL_PERIOD_INTERRUPT_ENABLE PIE2bits.TMR3IE
 
-#define WAITOFFSET 5536
+#define WAITOFFSET 20000
+//#define WAITOFFSET 5536
 //#define WAITOFFSET 10000
 
 //---------------------------------------------------------------------
@@ -36,27 +36,29 @@
  //---------------------------------------------------------------------
 #pragma romdata eedata_scn=0xf00000
 
-rom float minSignalDurationSaved = -1;
-rom float maxSignalDurationSaved = -1;
+rom float minSignalDurationSaved = 0.0002;
+rom float neutralSignalDurationSaved = 0.00075;
+rom float maxSignalDurationSaved = 0.00185;
 
 rom float PIDPeriodSaved = -1;
 
 rom PID_Coeffs PID_speed_saved = {-1,-1,-1};
 rom PID_Coeffs PID_position_saved = {-1,-1,-1};
 
-rom ChoixAsservissement choixAsservissement_saved = {0,0,0};
+rom ChoixAsservissement choixAsservissement_saved = {0,-1,-1};
 
+#pragma idata
+
+static volatile BOOL isControllingMotor[4] = {FALSE,FALSE,FALSE,FALSE};
+
+static float controlForMotor[4] = {0,0,0,0};
+
+static float speed_goal = HUGE_VAL;
+static UINT16 position_goal = MAX_SENSOR_ANGLE;
 
  #pragma idata access accessram
 
-static near volatile BOOL isControllingMotor[4] = {FALSE,FALSE,FALSE,FALSE};
-
 static near volatile BOOL isMotorTimerActive = FALSE;
-
-static near volatile double positionForMotor0 = 0;
-static near volatile double positionForMotor1 = 0;
-static near volatile double positionForMotor2 = 0;
-static near volatile double positionForMotor3 = 0;
 
 static near volatile Moteur currentMotor = 0;
 
@@ -64,13 +66,17 @@ static near volatile float PIDPeriod = 0;
 
 static near BOOL firstStart = TRUE;
 
+static near float integralTerm = 0;
+static near float lastValue = HUGE_VAL;
+
 #pragma udata
 
-static volatile PID_Coeffs PID_speed;
-static volatile PID_Coeffs PID_position;
-static volatile ChoixAsservissement choixAsservissement;
-static volatile float minSignalDuration;
-static volatile float maxSignalDuration;
+static PID_Coeffs PID_speed;
+static PID_Coeffs PID_position;
+static ChoixAsservissement choixAsservissement;
+static float minSignalDuration;
+static float neutralSignalDuration;
+static float maxSignalDuration;
 
 #pragma code
 
@@ -79,43 +85,13 @@ static void resetTimer20ms(void)
     WriteTimer3(WAITOFFSET);
 }
 
-double positionObjectiveForMotor(Moteur moteur)
+float positionObjectiveForMotor(Moteur moteur)
 {
-    if(moteur==0)
-    {
-        return positionForMotor0;
-    }
-    if(moteur==1)
-    {
-        return positionForMotor1;
-    }
-    if(moteur==2)
-    {
-        return positionForMotor2;
-    }
-    if(moteur==3)
-    {
-        return positionForMotor3;
-    }
+    return controlForMotor[moteur];
 }
-void setPositionObjectiveForMotor(Moteur moteur,double objective)
+void setPositionObjectiveForMotor(Moteur moteur, float objective)
 {
-    if(moteur==0)
-    {
-        positionForMotor0 = objective;
-    }
-    if(moteur==1)
-    {
-        positionForMotor1 = objective;
-    }
-    if(moteur==2)
-    {
-        positionForMotor2 = objective;
-    }
-    if(moteur==3)
-    {
-        positionForMotor3 = objective;
-    }
+    controlForMotor[moteur] = objective;
 }
 
 void openMotor(Moteur moteur)
@@ -156,6 +132,7 @@ void prepareMotorControl(void)
 
         firstStart = FALSE;
         eeprom_read_block((UINT8)&maxSignalDurationSaved, &maxSignalDuration, sizeof(float));
+        eeprom_read_block((UINT8)&neutralSignalDurationSaved, &neutralSignalDuration, sizeof(float));
         eeprom_read_block((UINT8)&minSignalDurationSaved, &minSignalDuration, sizeof(float));
 
         eeprom_read_block((UINT8)&PIDPeriodSaved, &PIDPeriod, sizeof(float));
@@ -175,7 +152,14 @@ static void prepareControlForCurrentMotor(void)
     openMotor(currentMotor);
 
     ratio = positionObjectiveForMotor(currentMotor);
-    signalDuration = (TICKS_PER_SECONDS*((ratio+1)*maxSignalDuration + (1-ratio)*minSignalDuration) + 1)/2;
+    if(ratio>=0)
+    {
+        signalDuration = TICKS_PER_SECONDS*(ratio*maxSignalDuration + (1-ratio)*neutralSignalDuration);
+    }
+    else
+    {
+        signalDuration = TICKS_PER_SECONDS*(-ratio*minSignalDuration + (1+ratio)*neutralSignalDuration);
+    }
     WriteTimer0(~signalDuration);
     MOTEUR_SIGNAL = 1;
 }
@@ -289,7 +273,24 @@ void setMaxSignalDuration(float duration)
         maxSignalDuration = duration;
         eeprom_write_block(&maxSignalDuration, (UINT8)&maxSignalDurationSaved, sizeof(float));
     }
-    if(maxSignalDuration<minSignalDuration)
+    if(maxSignalDuration<minSignalDuration || neutralSignalDuration>maxSignalDuration || neutralSignalDuration>minSignalDuration)
+    {
+        Motor motor;
+        for(motor=0 ; motor<4 ; motor++)
+        {
+            isControllingMotor[motor] = FALSE;
+        }
+    }
+}
+
+void setNeutralSignalDuration(float duration)
+{
+    if(duration<0.005 && duration>0.0001)
+    {
+        neutralSignalDuration = duration;
+        eeprom_write_block(&neutralSignalDuration, (UINT8)&neutralSignalDurationSaved, sizeof(float));
+    }
+    if(maxSignalDuration<minSignalDuration || neutralSignalDuration>maxSignalDuration || neutralSignalDuration>minSignalDuration)
     {
         Motor motor;
         for(motor=0 ; motor<4 ; motor++)
@@ -306,7 +307,7 @@ void setMinSignalDuration(float duration)
         minSignalDuration = duration;
         eeprom_write_block(&minSignalDuration, (UINT8)&minSignalDurationSaved, sizeof(float));
     }
-    if(maxSignalDuration<minSignalDuration)
+    if(maxSignalDuration<minSignalDuration || neutralSignalDuration>maxSignalDuration || neutralSignalDuration>minSignalDuration)
     {
         Motor motor;
         for(motor=0 ; motor<4 ; motor++)
@@ -320,6 +321,12 @@ float readMaxSignalDuration(void)
 {
     return maxSignalDuration;
 }
+
+float readNeutralSignalDuration(void)
+{
+    return neutralSignalDuration;
+}
+
 
 float readMinSignalDuration(void)
 {
@@ -357,6 +364,9 @@ void setChoixAsservissement(ChoixAsservissement newChoix)
 {
     choixAsservissement = newChoix;
     eeprom_write_block(&choixAsservissement, (UINT8)&choixAsservissement_saved, sizeof(ChoixAsservissement));
+
+    integralTerm = 0;
+    lastValue = HUGE_VAL;
 }
 
 void setPIDPeriod(float period)
@@ -371,4 +381,57 @@ void setPIDPeriod(float period)
 float readPIDPeriod(void)
 {
     return PIDPeriod;
+}
+
+void updateControl(void)
+{
+    if(choixAsservissement.type == ASSERVISSEMENT_POSITION && position_goal < MAX_SENSOR_ANGLE)
+    {
+        float newValue,error,differentialTerm;
+
+        UINT16 currentPosition = getPositionAtSensor(choixAsservissement.sensor);
+
+        newValue = currentPosition;
+        newValue /= MAX_SENSOR_ANGLE;
+
+        error = offsetBetweenAngle(position_goal,currentPosition);
+        error /= MAX_SENSOR_ANGLE;
+
+        integralTerm += PID_position.gainIntegral * error;
+        if(integralTerm > 1)
+        {
+            integralTerm = 1;
+        }
+        else if(integralTerm < -1)
+        {
+            integralTerm = -1;
+        }
+
+        if(lastValue != HUGE_VAL)
+        {
+            differentialTerm = newValue - lastValue;
+        }
+        else
+        {
+            differentialTerm = 0;
+        }
+
+        lastValue = newValue;
+
+        controlForMotor[choixAsservissement.motor] =    PID_position.gainProportionnel * error
+                                                    +   integralTerm
+                                                    -   PID_position.gainDifferentiel * differentialTerm;
+        if(controlForMotor[choixAsservissement.motor] > 1)
+        {
+            controlForMotor[choixAsservissement.motor] = 1;
+        }
+        else if(controlForMotor[choixAsservissement.motor] < -1)
+        {
+            controlForMotor[choixAsservissement.motor] = -1;
+        }
+    }
+    else if(choixAsservissement.type == ASSERVISSEMENT_VITESSE && position_goal != HUGE_VAL)
+    {
+        
+    }
 }

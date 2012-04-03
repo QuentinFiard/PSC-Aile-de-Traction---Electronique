@@ -19,6 +19,8 @@
 
 #include "CommunicationProtocol.h"
 
+#define BUFFER_SIZE 64
+
 typedef enum
 {
     PR_NOREQUEST = 0,
@@ -47,8 +49,8 @@ static BOOL waitingForAsservissementType = FALSE;
 
 #pragma udata
 
-char USB_In_Buffer[64];
-char USB_Out_Buffer[64];
+char USB_In_Buffer[BUFFER_SIZE];
+char USB_Out_Buffer[BUFFER_SIZE];
 
 // MOTOR_CONTROL
 static MC_ACTION action;
@@ -61,25 +63,25 @@ void loadNewData(void)
 {
     if(dataAvailable==0)
     {
-        dataAvailable = getsUSBUSART(USB_In_Buffer,64);
+        dataAvailable = getsUSBUSART(USB_In_Buffer,BUFFER_SIZE);
         nextEmptyByte = dataAvailable;
         currentByte = 0;
 
         return;
     }
-    if(dataAvailable<64)
+    if(dataAvailable<BUFFER_SIZE)
     {
         UINT8 oldDataAvailable = dataAvailable;
         if(currentByte<=nextEmptyByte)
         {
-            dataAvailable += getsUSBUSART(USB_In_Buffer+nextEmptyByte,64-nextEmptyByte);
+            dataAvailable += getsUSBUSART(USB_In_Buffer+nextEmptyByte,BUFFER_SIZE-nextEmptyByte);
             dataAvailable += getsUSBUSART(USB_In_Buffer,currentByte);
         }
         else
         {
             dataAvailable += getsUSBUSART(USB_In_Buffer+nextEmptyByte,currentByte-nextEmptyByte);
         }
-        nextEmptyByte = (nextEmptyByte+(dataAvailable-oldDataAvailable))%64;
+        nextEmptyByte = (nextEmptyByte+(dataAvailable-oldDataAvailable))%BUFFER_SIZE;
     }
 }
 
@@ -100,18 +102,18 @@ static void echo(void)
 
         for(i=0;i<dataAvailable;i++)
         {
-            if(USB_In_Buffer[(currentByte+i)%64] == 0)
+            if(USB_In_Buffer[(currentByte+i)%BUFFER_SIZE] == 0)
             {
                 currentMode = PR_NOREQUEST;
                 break;
             }
-            USB_Out_Buffer[i] = USB_In_Buffer[(currentByte+i)%64];
+            USB_Out_Buffer[i] = USB_In_Buffer[(currentByte+i)%BUFFER_SIZE];
 
         }
 
         putUSBUSART(USB_Out_Buffer,i);
         
-        currentByte = (currentByte+i)%64;
+        currentByte = (currentByte+i)%BUFFER_SIZE;
 
         dataAvailable -= i;
     }
@@ -139,7 +141,7 @@ static void continueWithCurrentMode(void)
             Sensor sensor;
 
             sensor = USB_In_Buffer[currentByte];
-            currentByte = (currentByte+1)%64;
+            currentByte = (currentByte+1)%BUFFER_SIZE;
             dataAvailable--;
 
             currentMode = PR_NOREQUEST;
@@ -171,7 +173,7 @@ static void handleMotorControlAction(void)
 
             currentMode = PR_NOREQUEST;
             
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
         }
     }
@@ -195,7 +197,27 @@ static void handleMotorControlAction(void)
 
             currentMode = PR_NOREQUEST;
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
+            dataAvailable -= 4;
+        }
+    }
+    else if(action == MC_SET_NEUTRAL_SIGNAL_DURATION)
+    {
+        if(dataAvailable<4)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=4)
+    	{
+            float newDuration;
+
+            newDuration = *((float*)(USB_In_Buffer+currentByte));
+
+            setNeutralSignalDuration(newDuration);
+
+            currentMode = PR_NOREQUEST;
+
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
         }
     }
@@ -215,13 +237,23 @@ static void handleMotorControlAction(void)
 
             currentMode = PR_NOREQUEST;
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
         }
     }
     else if(action == MC_READ_MIN_SIGNAL_DURATION)
     {
         float duration = readMinSignalDuration();
+
+        *((float*)USB_Out_Buffer) = duration;
+
+        putUSBUSART(USB_Out_Buffer,4);
+
+        currentMode = PR_NOREQUEST;
+    }
+    else if(action == MC_READ_NEUTRAL_SIGNAL_DURATION)
+    {
+        float duration = readNeutralSignalDuration();
 
         *((float*)USB_Out_Buffer) = duration;
 
@@ -251,17 +283,17 @@ static void handleMotorControlAction(void)
 
             newCoeffs.gainProportionnel = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             newCoeffs.gainDifferentiel = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             newCoeffs.gainIntegral = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             setSpeedPIDCoeffs(&newCoeffs);
@@ -281,17 +313,17 @@ static void handleMotorControlAction(void)
 
             newCoeffs.gainProportionnel = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             newCoeffs.gainDifferentiel = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             newCoeffs.gainIntegral = *((float*)(USB_In_Buffer+currentByte));
 
-            currentByte = (currentByte+4)%64;
+            currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
 
             setPositionPIDCoeffs(&newCoeffs);
@@ -360,11 +392,11 @@ static void handleMotorControlAction(void)
                 choix.type = typeAsservissement;
 
                 choix.motor = USB_In_Buffer[currentByte];
-                currentByte = (currentByte+1)%64;
+                currentByte = (currentByte+1)%BUFFER_SIZE;
                 dataAvailable -= 1;
 
                 choix.sensor = USB_In_Buffer[currentByte];
-                currentByte = (currentByte+1)%64;
+                currentByte = (currentByte+1)%BUFFER_SIZE;
                 dataAvailable -= 1;
 
                 setChoixAsservissement(choix);
@@ -416,7 +448,7 @@ static void handleMotorControlRequest(void)
                 waitingForAsservissementType = FALSE;
             }
             
-            currentByte = (currentByte+1)%64;
+            currentByte = (currentByte+1)%BUFFER_SIZE;
             dataAvailable--;
         }
     }
@@ -431,7 +463,7 @@ static void handleMotorControlRequest(void)
             waitingForMotorID = FALSE;
             motorID = USB_In_Buffer[currentByte];
             
-            currentByte = (currentByte+1)%64;
+            currentByte = (currentByte+1)%BUFFER_SIZE;
             dataAvailable--;
         }
     }
@@ -446,7 +478,7 @@ static void handleMotorControlRequest(void)
             waitingForAsservissementType = FALSE;
             typeAsservissement = USB_In_Buffer[currentByte];
 
-            currentByte = (currentByte+1)%64;
+            currentByte = (currentByte+1)%BUFFER_SIZE;
             dataAvailable--;
         }
     }
@@ -512,7 +544,7 @@ void ProcessUSBData(void)
             if(dataAvailable > 0)
             {
                 UINT8 oldCurrentByte = currentByte;
-            	currentByte = (currentByte+1)%64;
+            	currentByte = (currentByte+1)%BUFFER_SIZE;
                 dataAvailable--;
 
                 handleProcessRequest(USB_In_Buffer[oldCurrentByte]);
