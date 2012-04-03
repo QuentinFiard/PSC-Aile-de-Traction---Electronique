@@ -29,11 +29,6 @@ typedef enum
     PR_READSENSOR
 } ProcessRequest;
 
-typedef enum
-{
-    MC_SET_POSITION
-} MC_ACTION;
-
 #pragma idata
 
 static ProcessRequest currentMode = PR_NOREQUEST;
@@ -157,7 +152,7 @@ static void continueWithCurrentMode(void)
 
 static void handleMotorControlAction(void)
 {
-    if(action == MC_SET_POSITION)
+    if(action == MC_SET_SIGNAL)
     {
         if(dataAvailable<4)
     	{
@@ -169,17 +164,53 @@ static void handleMotorControlAction(void)
 
             position = *((float*)(USB_In_Buffer+currentByte));
 
-            setRelativePositionObjectiveForMotor(position,motorID);
+            setSignalObjectiveForMotor(motorID,position);
 
             currentMode = PR_NOREQUEST;
-            
+
+            currentByte = (currentByte+4)%BUFFER_SIZE;
+            dataAvailable -= 4;
+        }
+    }
+    else if(action == MC_SET_POSITION)
+    {
+        if(dataAvailable<4)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=4)
+    	{
+            float position;
+
+            position = *((float*)(USB_In_Buffer+currentByte));
+
+            setPositionObjective(position);
+
+            currentMode = PR_NOREQUEST;
+
             currentByte = (currentByte+4)%BUFFER_SIZE;
             dataAvailable -= 4;
         }
     }
     else if(action == MC_SET_SPEED)
     {
+        if(dataAvailable<4)
+    	{
+            loadNewData();
+    	}
+    	if(dataAvailable>=4)
+    	{
+            float position;
 
+            position = *((float*)(USB_In_Buffer+currentByte));
+
+            setSpeedObjective(position);
+
+            currentMode = PR_NOREQUEST;
+
+            currentByte = (currentByte+4)%BUFFER_SIZE;
+            dataAvailable -= 4;
+        }
     }
     else if(action == MC_SET_MIN_SIGNAL_DURATION)
     {
@@ -431,7 +462,7 @@ static void handleMotorControlRequest(void)
             waitingForActionChoice = FALSE;
             action = USB_In_Buffer[currentByte];
 
-            if(action == MC_SET_POSITION || action == MC_SET_SPEED)
+            if(action == MC_SET_SIGNAL)
             {
                 waitingForMotorID = TRUE;
             }

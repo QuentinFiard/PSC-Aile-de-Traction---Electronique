@@ -37,7 +37,7 @@
 #pragma romdata eedata_scn=0xf00000
 
 rom float minSignalDurationSaved = 0.0002;
-rom float neutralSignalDurationSaved = 0.00075;
+rom float neutralSignalDurationSaved = 0.00108;
 rom float maxSignalDurationSaved = 0.00185;
 
 rom float PIDPeriodSaved = -1;
@@ -85,13 +85,25 @@ static void resetTimer20ms(void)
     WriteTimer3(WAITOFFSET);
 }
 
-float positionObjectiveForMotor(Moteur moteur)
+float signalObjectiveForMotor(Moteur moteur)
 {
     return controlForMotor[moteur];
 }
-void setPositionObjectiveForMotor(Moteur moteur, float objective)
+void setSignalObjectiveForMotor(Moteur moteur, float objective)
 {
+    BOOL oldIsActive = isMotorTimerActive;
+
     controlForMotor[moteur] = objective;
+
+    isMotorTimerActive = TRUE;
+
+    isControllingMotor[moteur] = TRUE;
+
+    if(!oldIsActive)
+    {
+        prepareMotorControl();
+        startNextMotorControlSequence();
+    }
 }
 
 void openMotor(Moteur moteur)
@@ -149,9 +161,14 @@ static void prepareControlForCurrentMotor(void)
     double ratio;
     UINT16 signalDuration;
 
+    if(choixAsservissement.type != ASSERVISSEMENT_SANS && currentMotor==choixAsservissement.motor)
+    {
+        updateControl();
+    }
+
     openMotor(currentMotor);
 
-    ratio = positionObjectiveForMotor(currentMotor);
+    ratio = signalObjectiveForMotor(currentMotor);
     if(ratio>=0)
     {
         signalDuration = TICKS_PER_SECONDS*(ratio*maxSignalDuration + (1-ratio)*neutralSignalDuration);
@@ -160,6 +177,7 @@ static void prepareControlForCurrentMotor(void)
     {
         signalDuration = TICKS_PER_SECONDS*(-ratio*minSignalDuration + (1+ratio)*neutralSignalDuration);
     }
+
     WriteTimer0(~signalDuration);
     MOTEUR_SIGNAL = 1;
 }
@@ -183,23 +201,6 @@ void stopMotorSignal()
     else
     {
         CloseTimer0();
-    }
-}
-
-void setRelativePositionObjectiveForMotor(double ratio, Moteur moteur)
-{
-    BOOL oldIsActive = isMotorTimerActive;
-
-    isMotorTimerActive = TRUE;
-
-    isControllingMotor[moteur] = TRUE;
-    setPositionObjectiveForMotor(moteur,ratio);
-    currentMotor = moteur;
-
-    if(!oldIsActive)
-    {
-        prepareMotorControl();
-        startNextMotorControlSequence();
     }
 }
 
@@ -433,5 +434,45 @@ void updateControl(void)
     else if(choixAsservissement.type == ASSERVISSEMENT_VITESSE && position_goal != HUGE_VAL)
     {
         
+    }
+}
+
+void setPositionObjective(UINT16 objective)
+{
+    position_goal = objective;
+
+    if(choixAsservissement.type == ASSERVISSEMENT_POSITION)
+    {
+        BOOL oldIsActive = isMotorTimerActive;
+
+        isMotorTimerActive = TRUE;
+
+        isControllingMotor[choixAsservissement.motor] = TRUE;
+
+        if(!oldIsActive)
+        {
+            prepareMotorControl();
+            startNextMotorControlSequence();
+        }
+    }
+}
+
+void setSpeedObjective(float speed)
+{
+    speed_goal = speed;
+
+    if(choixAsservissement.type == ASSERVISSEMENT_VITESSE)
+    {
+        BOOL oldIsActive = isMotorTimerActive;
+
+        isMotorTimerActive = TRUE;
+
+        isControllingMotor[choixAsservissement.motor] = TRUE;
+
+        if(!oldIsActive)
+        {
+            prepareMotorControl();
+            startNextMotorControlSequence();
+        }
     }
 }

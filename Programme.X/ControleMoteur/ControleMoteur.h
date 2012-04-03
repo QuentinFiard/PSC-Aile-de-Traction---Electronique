@@ -12,15 +12,11 @@
 
 typedef UINT8 Moteur;
 
-typedef INT32 AngularPosition;
-
 void prepareMotorControl(void);
 
-void setRelativeSpeedForMotor(double ratio, Moteur moteur);
+void setPositionObjective(UINT16 objective);
 
-void setAngularPositionObjectiveForMotor(AngularPosition objective, Moteur moteur);
-
-void setRelativePositionObjectiveForMotor(double ratio, Moteur moteur);
+void setSpeedObjective(float speed);
 
 void stopControllingMotor(Moteur moteur);
 
@@ -30,9 +26,9 @@ void startNextMotorControlSequence(void);
 
 void openMotor(Moteur moteur);
 
-double positionObjectiveForMotor(Moteur moteur);
+double signalObjectiveForMotor(Moteur moteur);
 
-void setPositionObjectiveForMotor(Moteur moteur,double objective);
+void setSignalObjectiveForMotor(Moteur moteur,double objective);
 
 void setMaxSignalDuration(float duration);
 void setNeutralSignalDuration(float duration);
