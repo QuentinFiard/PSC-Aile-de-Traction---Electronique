@@ -137,7 +137,7 @@ void updateSensorStatus(SensorStatus status, Sensor sensor)
 
 void updateStatusOfSensor(Sensor sensor)
 {
-    UINT8 byte3;
+    UINT8 byte3,test;
     UINT8 i;
     SensorStatus res;
     
@@ -153,9 +153,16 @@ void updateStatusOfSensor(Sensor sensor)
     interruptEnable = INTCONbits.GIEH;
     INTCONbits.GIEH = 0; //disable interrupts
 
-    CLOCK_PORT = 0;
+    if(sensor==0)
+    {
+        Nop();
+    }
+
+    CLOCK_PORT = 1;
 
     SPI_TIME_OFFSET
+    //SPI_TIME_OFFSET
+    //SPI_TIME_OFFSET
 
     readTime = ReadTimer1();
 
@@ -164,16 +171,22 @@ void updateStatusOfSensor(Sensor sensor)
     // Waiting 500 ns for sensor to be ready (Period = 83 ns => about 7 cycles, waiting 20)
 
     SPI_TIME_OFFSET
+    //SPI_TIME_OFFSET
+    //SPI_TIME_OFFSET
+    //SPI_TIME_OFFSET
+    
 
     res.position = 0;
 
-    for(i=0 ; i<12 ; i++)
+    for(i=0 ; i<13 ; i++)
     {
         res.position <<= 1;
 
         CLOCK_PORT = 1;
 
         SPI_TIME_OFFSET_UP
+
+        //res.position += DATA_IN;
 
         CLOCK_PORT = 0;
 
@@ -192,6 +205,8 @@ void updateStatusOfSensor(Sensor sensor)
 
         SPI_TIME_OFFSET_UP
 
+        //byte3 += DATA_IN;
+
         CLOCK_PORT = 0;
 
         SPI_TIME_OFFSET
@@ -201,9 +216,34 @@ void updateStatusOfSensor(Sensor sensor)
 
     }
 
+    test = 0;
+
+    for(i=0 ; i<8 ; i++)
+    {
+        test <<= 1;
+
+        CLOCK_PORT = 1;
+
+        SPI_TIME_OFFSET_UP
+
+        //byte3 += DATA_IN;
+
+        CLOCK_PORT = 0;
+
+        SPI_TIME_OFFSET
+
+        test += DATA_IN;
+
+
+    }
+
     /*byte1 = ReadSPI();
     byte2 = ReadSPI();
-    byte3 = ReadSPI();*/
+    byte3 = ReadSPI();*/    
+
+    
+    
+    SPI_TIME_OFFSET
 
     LATA |= 0x3F; // Return to waiting state
 
@@ -212,8 +252,6 @@ void updateStatusOfSensor(Sensor sensor)
     CLOCK_PORT = 1;
 
     INTCONbits.GIEH=interruptEnable;
-
-    ProcessUSBData();
 
     /*res.position = 0;
 
@@ -247,6 +285,11 @@ void updateStatusOfSensor(Sensor sensor)
     if(!checkParity(res.position,byte3))
     {
         res.error += SENSOR_ERROR_PARITY;
+    }
+
+    if(sensor==0)
+    {
+        Nop();
     }
 
     if(!OCF)
