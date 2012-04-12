@@ -52,6 +52,8 @@
 
 #define NUM_SPEED 10
 
+#define NUM_VALUE 8
+
 extern BOOL shouldUpdateSensors;
 
 #pragma idata
@@ -66,8 +68,8 @@ static UINT8 numSpeed[6] = {0,0,0,0,0,0};
 
 #pragma udata Capteurs
 
-static UINT16 lastAngle[6][3];
-static UINT16 timeOffset[6][2];
+static UINT16 lastAngle[6][NUM_VALUE];
+static UINT16 timeOffset[6][NUM_VALUE-1];
 static UINT16 lastDate[6];
 static float vitesseRotation[6];
 
@@ -126,11 +128,71 @@ UINT16 timeOffsetBetweenDate(UINT16 date1, UINT16 date2)
         return 0x10000 - (date1-date2);
     }
 }
-
 void calculVitesseRotation(Sensor sensor)
 {
-    UINT8 timeIndex,angleIndex,angleRefIndex;
-    float d10,d20,d21;
+    UINT8 timeIndex,angleIndex,angleRefIndex,i;
+
+    double dt = 0;
+    double dtheta = 0;
+
+    timeIndex = nextTimeIndex[sensor];
+
+    for(i=0 ; i<NUM_VALUE-1 ; i++)
+    {
+        dt += timeOffset[sensor][timeIndex];
+
+        timeIndex++;
+        timeIndex %= NUM_VALUE-1;
+    }
+
+    dt *= SECONDS_PER_TIME_QUANTA;
+
+    angleRefIndex = nextAngleIndex[sensor];
+    angleIndex = angleRefIndex+1;
+    angleIndex %= NUM_VALUE;
+
+    for(i=1 ; i<NUM_VALUE ; i++)
+    {
+        dtheta += offsetBetweenAngle(lastAngle[sensor][angleRefIndex],lastAngle[sensor][angleIndex]);
+        angleRefIndex = angleIndex;
+        angleIndex++;
+        angleIndex %= NUM_VALUE;
+    }
+
+    dtheta *=  2 * M_PI / MAX_SENSOR_ANGLE;
+
+    if(dt>0)
+    {
+        float speed = dtheta/dt;
+
+        if(numSpeed[sensor]<NUM_SPEED)
+        {
+            lastSpeed[sensor][nextSpeedIndex[sensor]] = speed;
+
+            vitesseRotation[sensor] *= numSpeed[sensor];
+            vitesseRotation[sensor] += speed;
+            numSpeed[sensor]++;
+            vitesseRotation[sensor] /= numSpeed[sensor];
+
+            nextSpeedIndex[sensor]++;
+            nextSpeedIndex[sensor] %= NUM_SPEED;
+        }
+        else
+        {
+            vitesseRotation[sensor] *= NUM_SPEED;
+            vitesseRotation[sensor] -= lastSpeed[sensor][nextSpeedIndex[sensor]];
+
+            lastSpeed[sensor][nextSpeedIndex[sensor]] = speed;
+
+            vitesseRotation[sensor] += speed;
+            vitesseRotation[sensor] /= NUM_SPEED;
+
+            nextSpeedIndex[sensor]++;
+            nextSpeedIndex[sensor] %= NUM_SPEED;
+        }
+    }
+
+    /*float d10,d20,d21;
     float y0,y1,y2;
 
     timeIndex = nextTimeIndex[sensor];
@@ -153,7 +215,7 @@ void calculVitesseRotation(Sensor sensor)
         angleRefIndex = angleIndex;
         angleIndex++;
         angleIndex %= 3;
-        y2 = y0 + offsetBetweenAngle(lastAngle[sensor][angleRefIndex],lastAngle[sensor][angleIndex]) * 2 * M_PI / MAX_SENSOR_ANGLE;
+        y2 = y1 + offsetBetweenAngle(lastAngle[sensor][angleRefIndex],lastAngle[sensor][angleIndex]) * 2 * M_PI / MAX_SENSOR_ANGLE;
 
         //speed = y0*d21/(d10*d20) - y1*d20/(d10*d21) + y2*(d21+d20)/(d20*d21);
 
@@ -184,7 +246,7 @@ void calculVitesseRotation(Sensor sensor)
             nextSpeedIndex[sensor]++;
             nextSpeedIndex[sensor] %= NUM_SPEED;
         }
-    }
+    }*/
 }
 
 void updateSensorStatus(SensorStatus status, Sensor sensor)
@@ -206,9 +268,9 @@ void updateSensorStatus(SensorStatus status, Sensor sensor)
         lastDate[sensor] = readTime;
 
         nextTimeIndex[sensor]++;
-        nextTimeIndex[sensor] %= 2;
+        nextTimeIndex[sensor] %= NUM_VALUE-1;
         nextAngleIndex[sensor]++;
-        nextAngleIndex[sensor] %= 3;
+        nextAngleIndex[sensor] %= NUM_VALUE;
 
         calculVitesseRotation(sensor);
     }
@@ -327,9 +389,9 @@ SensorDataPacket getDataPacketForSensor(Sensor sensor)
 
     res.vitesseRotation = vitesseRotation[sensor];
 
-    position = lastAngle[sensor][(nextAngleIndex[sensor]+2)%3];
+    position = lastAngle[sensor][(nextAngleIndex[sensor]+NUM_VALUE-1)%NUM_VALUE];
 
-    position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
+    //position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
 
     res.position = floor(position);
 
@@ -391,11 +453,11 @@ UINT16 getPositionAtSensor(Sensor sensor)
     double position;
     UINT16 res;
 
-    position = lastAngle[sensor][(nextAngleIndex[sensor]+2)%3];
+    position = lastAngle[sensor][(nextAngleIndex[sensor]+NUM_VALUE-1)%NUM_VALUE];
 
-    position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
+    //position += MAX_SENSOR_ANGLE * vitesseRotation[sensor] * (timeOffsetBetweenDate(lastDate[sensor],ReadTimer1())*SECONDS_PER_TIME_QUANTA + PROPAGATION_DELAY);
 
-    res = floor(position);
+    //res = floor(position);
 
     res %= MAX_SENSOR_ANGLE;
 }
